@@ -12,3 +12,10 @@ Added BootDreams in Tools
 Building can be done with BootDreams (CDI)
 
 More info to follow :)
+
+
+Para buildear:
+
+Bootdreams
+data/data
+sin scramblear el binary (responder que no)
