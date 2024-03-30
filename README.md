@@ -19,3 +19,9 @@ Para buildear:
 Bootdreams
 data/data
 sin scramblear el binary (responder que no)
+
+
+PAra hacerse un 1stread custom:
+https://www.paxtez.zachd.com/
+
+tremenda app web
