@@ -7,7 +7,6 @@ Rematch
 More Music [Shuffle - 32]
 Reorganize Character Select [High Tier Layout]
 Expanded Palettes [16 Colors]
-Binhack [GDI - 45166]
 
  COSMETICS
 ===========
