@@ -4,30 +4,20 @@
 All Unlocks
 Random Stage Fix v2
 Rematch
-Disable Handicap
 More Music [Shuffle - 32]
 Reorganize Character Select [High Tier Layout]
 Expanded Palettes [16 Colors]
-Hold Start to Pause
+Binhack [GDI - 45166]
 
  COSMETICS
 ===========
-TEXT: Press Start Main [REMATCH MOD ENABLED]
-TEXT: Handicap []
+TEXT: Press Start Main [APRIETA LA WEA OE]
+TEXT: Press Start [METETE PO OE]
+TEXT: New Hero [NUEVO WN]
 
  EXTRA OPTIONS
 ===============
-Fix Blue Screen Typo
-Dark Theme Loading Tunnel
-Alternate Game HUD
-Expanded Palette Files
 Shuffle Songs - 32
-37 Reloaded Files
-
- CUSTOM STAGE LIST
-===================
-STG00 - Airship - Day = CvS2 - Training Stage (v1.1) by TVIndustries
-STG01 - Desert - Sunset = SFA2 - Venezuela (v1.0) by TVIndustries
 
 
 Created with the MVC2 MOD TOOL 2024-03-30 [ https://paxtez.zachd.com/]
