@@ -4,19 +4,27 @@
 All Unlocks
 Random Stage Fix v2
 Rematch
+Disable Handicap
 More Music [Shuffle - 32]
 Reorganize Character Select [High Tier Layout]
 Expanded Palettes [16 Colors]
 
+ CUSTOM STAGES ENABLED
+=======================
+STG00-Airship - Day
+STG01-Desert - Sunset
+STG10-River - Thawed
+
  COSMETICS
 ===========
-TEXT: Press Start Main [APRIETA LA WEA OE]
-TEXT: Press Start [METETE PO OE]
-TEXT: New Hero [NUEVO WN]
+TEXT: Press Start Main [REMATCH MOD ENABLED]
+TEXT: Handicap []
 
- EXTRA OPTIONS
-===============
-Shuffle Songs - 32
+ CUSTOM STAGE LIST
+===================
+STG00 - Airship - Day = CvS2 - Training Stage (v1.1) by TVIndustries
+STG01 - Desert - Sunset = SFA2 - Eliza Birthday Bash (v1.0) by TVIndustries
+STG10 - River - Thawed = MSHvSF - Temple of Fists (v0.1) by TVIndustries
 
 
-Created with the MVC2 MOD TOOL 2024-03-30 [ https://paxtez.zachd.com/]
+Created with the MVC2 MOD TOOL 2024-04-18 [ https://paxtez.zachd.com/]
