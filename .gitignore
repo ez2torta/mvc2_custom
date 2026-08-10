@@ -1,5 +1,7 @@
 .hist/
 output_gdi/
 output_cdi/
+Extracted_Audio/WAV/
+Extracted_Audio/MP3/
 *.tmp
 .DS_Store

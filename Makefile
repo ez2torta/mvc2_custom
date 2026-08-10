@@ -8,10 +8,11 @@ TOOLS_LINUX := $(ROOT_DIR)/Tools/linux
 MODNAO_DIR := $(ROOT_DIR)/Tools/modnao
 MVC2_DATA := $(ROOT_DIR)/MVC2
 TEXTURES_DIR := $(ROOT_DIR)/Extracted_Textures
+AUDIO_DIR := $(ROOT_DIR)/Extracted_Audio
 OUTPUT_GDI := $(ROOT_DIR)/output_gdi
 OUTPUT_CDI := $(ROOT_DIR)/output_cdi
 
-.PHONY: all help build-tools extract-textures dump-textures inject-textures pack-textures gdi cdi convert-audio scramble unscramble clean
+.PHONY: all help build-tools extract-textures dump-textures inject-textures pack-textures extract-audio dump-audio inject-audio pack-audio gdi cdi convert-audio scramble unscramble clean
 
 all: help
 
@@ -26,13 +27,17 @@ help:
 	@echo "  make extract-textures   Extrae TODAS las texturas de MVC2 a PNG (Extracted_Textures/)"
 	@echo "  make inject-textures    Reinyecta las texturas PNG modificadas a la carpeta MVC2/"
 	@echo ""
+	@echo "  --- AUDIO (CRI ADX / WAV / MP3) ---"
+	@echo "  make extract-audio      Extrae TODAS las pistas ADX a WAV y MP3 (Extracted_Audio/)"
+	@echo "  make inject-audio       Reinyecta los audios editados de Extracted_Audio/ a MVC2/"
+	@echo "  make convert-audio      Convierte un audio individual a CRI ADX"
+	@echo "                          Uso: make convert-audio INPUT=tema.mp3 OUTPUT=MVC2/ADX_S000.BIN"
+	@echo ""
 	@echo "  --- COMPILACIÓN DE IMÁGENES ---"
 	@echo "  make gdi                Genera la imagen GDI para emuladores/GDEMU (output_gdi/)"
 	@echo "  make cdi                Genera la imagen CDI autoboot para CD-R (output_cdi/)"
 	@echo ""
-	@echo "  --- AUDIO Y HERRAMIENTAS ---"
-	@echo "  make convert-audio      Convierte un audio a CRI ADX con FFmpeg"
-	@echo "                          Uso: make convert-audio INPUT=tema.mp3 OUTPUT=MVC2/ADX_S000.BIN"
+	@echo "  --- HERRAMIENTAS SH-4 ---"
 	@echo "  make scramble           Scramblea un binario SH-4 (Uso: make scramble INPUT=... OUTPUT=...)"
 	@echo "  make unscramble         Descramblea un binario SH-4 (Uso: make unscramble INPUT=... OUTPUT=...)"
 	@echo "  make build-tools        Compila herramientas nativas e instala dependencias de ModNao"
@@ -59,6 +64,18 @@ pack-textures:
 	@echo "[*] Reinyectando texturas modificadas a MVC2/..."
 	$(TOOLS_LINUX)/import_textures.sh "$(TEXTURES_DIR)" "$(MVC2_DATA)" "$(MVC2_DATA)"
 
+## extract-audio / dump-audio: Extrae todos los ADX a WAV y MP3
+extract-audio: dump-audio
+dump-audio:
+	@echo "[*] Extrayendo todas las pistas de audio ADX a WAV y MP3..."
+	python3 $(TOOLS_LINUX)/export_audio.py "$(MVC2_DATA)" "$(AUDIO_DIR)"
+
+## inject-audio / pack-audio: Reinyecta WAV/MP3 a ADX en MVC2/
+inject-audio: pack-audio
+pack-audio:
+	@echo "[*] Reinyectando pistas de audio a formato CRI ADX en MVC2/..."
+	python3 $(TOOLS_LINUX)/import_audio.py "$(AUDIO_DIR)" "$(MVC2_DATA)"
+
 ## gdi: Genera la imagen GDI completa (disc.gdi, track01, track02, track03)
 gdi:
 	@echo "[*] Generando imagen GDI..."
@@ -69,7 +86,7 @@ cdi:
 	@echo "[*] Generando imagen CDI..."
 	$(TOOLS_LINUX)/build_cdi.sh "$(OUTPUT_CDI)"
 
-## convert-audio: Convierte audio a ADX
+## convert-audio: Convierte audio individual a ADX
 convert-audio:
 	@if [ -z "$(INPUT)" ]; then \
 		echo "[!] Error: Especifica INPUT=<archivo_audio> [OUTPUT=<archivo_adx>]"; \
