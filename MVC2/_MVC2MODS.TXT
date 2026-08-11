@@ -1,0 +1,17 @@
+ GAME MODIFICATIONS
+====================
+All Unlocks
+Random Stage Fix v2
+Rematch
+Turbo Loading Tunnel [2.5 Seconds [Rec]]
+Disable Handicap
+Always Show "WINS X"
+Hold Start to Pause
+
+ COSMETICS
+===========
+TEXT: Press Start Main [TOURNAMENT EDITION]
+TEXT: Handicap []
+
+
+Created with the MVC2 MOD TOOL 2025-01-23 [ https://paxtez.zachd.com/]

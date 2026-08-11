@@ -8,6 +8,7 @@ import os
 import sys
 import subprocess
 import shutil
+import re
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "../.."))
@@ -68,11 +69,37 @@ SONG_TITLES = {
     "ADX_NRFT.BIN": ("Alternate River", "Stage Theme"),
 }
 
-def export_all_audio(mvc2_dir, out_dir):
+def parse_filters(filter_str):
+    if not filter_str:
+        return None
+    raw = re.split(r"[,;\s]+", filter_str)
+    filters = set()
+    for item in raw:
+        clean = item.strip().upper()
+        if clean.endswith(".BIN"):
+            clean = clean[:-4]
+        if clean:
+            filters.add(clean)
+    return filters if filters else None
+
+def matches_audio_filter(adx_key, filename, title, filters):
+    if not filters:
+        return True
+    key_upper = adx_key.upper()
+    fname_upper = filename.upper()
+    title_upper = title.upper()
+    for f in filters:
+        if f in key_upper or key_upper in f or f in fname_upper or f in title_upper:
+            return True
+    return False
+
+def export_all_audio(mvc2_dir, out_dir, filter_str=None):
     if not shutil.which("ffmpeg"):
         print("[!] Error: 'ffmpeg' no está instalado en el sistema.")
         print("    Instálalo con: sudo apt install ffmpeg")
         sys.exit(1)
+
+    filters = parse_filters(filter_str)
 
     wav_dir = os.path.join(out_dir, "WAV")
     mp3_dir = os.path.join(out_dir, "MP3")
@@ -83,7 +110,9 @@ def export_all_audio(mvc2_dir, out_dir):
     print("    MVC2 Audio Extractor (ADX -> WAV & MP3)")
     print(f"    Origen : {mvc2_dir}")
     print(f"    Destino: {out_dir}")
-    print("=======================================================\n")
+    if filters:
+        print(f"    Filtro : {', '.join(sorted(filters))}")
+    print("=======================================================")
 
     files = sorted([f for f in os.listdir(mvc2_dir) if f.upper().startswith("ADX_") and f.upper().endswith(".BIN")])
     if not files:
@@ -103,6 +132,9 @@ def export_all_audio(mvc2_dir, out_dir):
         base_id = filename.replace(".BIN", "")
         title, track_type = SONG_TITLES.get(filename, (base_id, "Music"))
         
+        if not matches_audio_filter(base_id, filename, title, filters):
+            continue
+
         # Limpiar nombre para archivo
         safe_title = "".join(c if c.isalnum() or c in (' ', '_', '-') else '_' for c in title).replace(" ", "_")
         wav_filename = f"{base_id}_{safe_title}.wav"
@@ -132,18 +164,19 @@ def export_all_audio(mvc2_dir, out_dir):
         print(f"[✓] {filename} -> {title} ({wav_filename})")
         total_exported += 1
 
-    with open(tracklist_md, "w") as f:
-        f.write("\n".join(md_lines) + "\n")
+    if not filters:
+        with open(tracklist_md, "w") as f:
+            f.write("\n".join(md_lines) + "\n")
 
     print("\n=======================================================")
-    print(f"[✓] ¡Extracción de audio completada!")
+    print(f"[✓] Extracción de audio completada.")
     print(f"    Pistas procesadas: {total_exported}")
     print(f"    Archivos WAV: {wav_dir}")
     print(f"    Archivos MP3: {mp3_dir}")
-    print(f"    Índice: {tracklist_md}")
     print("=======================================================")
 
 if __name__ == "__main__":
     in_dir = sys.argv[1] if len(sys.argv) > 1 else MVC2_DIR
     out_dir = sys.argv[2] if len(sys.argv) > 2 else DEFAULT_OUT_DIR
-    export_all_audio(in_dir, out_dir)
+    filter_arg = sys.argv[3] if len(sys.argv) > 3 else (os.environ.get("ONLY") or os.environ.get("TRACKS") or os.environ.get("FILES") or os.environ.get("NAMES"))
+    export_all_audio(in_dir, out_dir, filter_arg)

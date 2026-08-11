@@ -207,7 +207,7 @@ def generate_track03(data_dir, ip_bin_path, output_path):
 
         for f in sorted(files):
             # Omitir archivos auxiliares de modding/backup
-            if f.endswith(('.bak', '.txt', '.mn.BIN', '.backup.BIN', '!MVC2MODS.BIN')) or f.startswith('!'):
+            if f.endswith(('.bak', '.backup.BIN', '.orig')) or f.startswith('.'):
                 continue
             full_path = os.path.join(root, f)
             if rel_root == '.':

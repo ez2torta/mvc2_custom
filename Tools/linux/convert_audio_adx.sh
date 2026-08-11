@@ -20,7 +20,8 @@ if ! command -v ffmpeg &> /dev/null; then
 fi
 
 echo "[*] Convirtiendo '$INPUT' a formato CRI ADX (44100Hz Stereo)..."
-ffmpeg -y -i "$INPUT" -ar 44100 -ac 2 -c:a adx "$OUTPUT"
+ffmpeg -y -i "$INPUT" -ar 44100 -ac 2 -c:a adpcm_adx -f adx "$OUTPUT" 2>/dev/null || \
+ffmpeg -y -i "$INPUT" -ar 44100 -ac 2 -c:a adx -f adx "$OUTPUT"
 
 if [ $? -eq 0 ]; then
     echo "[✓] Archivo generado exitosamente: $OUTPUT"

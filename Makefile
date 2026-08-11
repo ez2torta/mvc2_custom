@@ -12,11 +12,11 @@ AUDIO_DIR := $(ROOT_DIR)/Extracted_Audio
 OUTPUT_GDI := $(ROOT_DIR)/output_gdi
 OUTPUT_CDI := $(ROOT_DIR)/output_cdi
 
-.PHONY: all help build-tools extract-textures dump-textures inject-textures pack-textures extract-audio dump-audio inject-audio pack-audio gdi cdi convert-audio scramble unscramble clean
+.PHONY: all help build-tools extract-textures dump-textures inject-textures pack-textures extract-audio dump-audio inject-audio pack-audio gdi cdi cdi-dummy convert-audio scramble unscramble clean
 
 all: help
 
-## help: Muestra este mensaje de ayuda
+### help: Muestra este mensaje de ayuda
 help:
 	@echo "========================================================================"
 	@echo "    Marvel vs Capcom 2 (Dreamcast) - Modding & Build Pipeline"
@@ -24,18 +24,23 @@ help:
 	@echo "Comandos disponibles:"
 	@echo ""
 	@echo "  --- TEXTURAS (ModNao Engine) ---"
-	@echo "  make extract-textures   Extrae TODAS las texturas de MVC2 a PNG (Extracted_Textures/)"
-	@echo "  make inject-textures    Reinyecta las texturas PNG modificadas a la carpeta MVC2/"
+	@echo "  make extract-textures   Extrae texturas a PNG (Extracted_Textures/)"
+	@echo "                          Opcional: ONLY=DM08CAB o FILES=DM08CAB,DM08CHR"
+	@echo "  make inject-textures    Reinyecta texturas PNG editadas a MVC2/"
+	@echo "                          Opcional: ONLY=DM08CAB o FILES=DM08CAB,DM08CHR"
 	@echo ""
 	@echo "  --- AUDIO (CRI ADX / WAV / MP3) ---"
-	@echo "  make extract-audio      Extrae TODAS las pistas ADX a WAV y MP3 (Extracted_Audio/)"
-	@echo "  make inject-audio       Reinyecta los audios editados de Extracted_Audio/ a MVC2/"
+	@echo "  make extract-audio      Extrae pistas ADX a WAV y MP3 (Extracted_Audio/)"
+	@echo "                          Opcional: ONLY=ADX_S080 o TRACKS=ADX_S080,ADX_MENU"
+	@echo "  make inject-audio       Reinyecta audios de Extracted_Audio/ a MVC2/"
+	@echo "                          Opcional: ONLY=ADX_S080 o TRACKS=ADX_S080,ADX_MENU"
 	@echo "  make convert-audio      Convierte un audio individual a CRI ADX"
 	@echo "                          Uso: make convert-audio INPUT=tema.mp3 OUTPUT=MVC2/ADX_S000.BIN"
 	@echo ""
 	@echo "  --- COMPILACIÓN DE IMÁGENES ---"
 	@echo "  make gdi                Genera la imagen GDI para emuladores/GDEMU (output_gdi/)"
-	@echo "  make cdi                Genera la imagen CDI autoboot para CD-R (output_cdi/)"
+	@echo "  make cdi                Genera la imagen CDI autoboot compacta (~498 MB)"
+	@echo "  make cdi-dummy          Genera la imagen CDI optimizada con 0DUMMY.DAT (hasta 650 MB para CD-R)"
 	@echo ""
 	@echo "  --- HERRAMIENTAS SH-4 ---"
 	@echo "  make scramble           Scramblea un binario SH-4 (Uso: make scramble INPUT=... OUTPUT=...)"
@@ -58,39 +63,44 @@ build-tools:
 	cd $(MODNAO_DIR) && npm install --silent
 	@echo "[✓] Todas las herramientas y dependencias listas."
 
-## extract-textures / dump-textures: Extrae todas las texturas de MVC2 a PNG
+## extract-textures / dump-textures: Extrae texturas de MVC2 a PNG (Opcional: ONLY=... o FILES=...)
 extract-textures: dump-textures
 dump-textures:
-	@echo "[*] Extrayendo todas las texturas con ModNao..."
-	$(TOOLS_LINUX)/export_textures.sh "$(MVC2_DATA)" "$(TEXTURES_DIR)"
+	@echo "[*] Extrayendo texturas con ModNao..."
+	$(TOOLS_LINUX)/export_textures.sh "$(MVC2_DATA)" "$(TEXTURES_DIR)" "$(ONLY)$(FILES)$(NAMES)"
 
-## inject-textures / pack-textures: Reinyecta las texturas editadas a los .BIN
+## inject-textures / pack-textures: Reinyecta texturas editadas a los .BIN (Opcional: ONLY=... o FILES=...)
 inject-textures: pack-textures
 pack-textures:
 	@echo "[*] Reinyectando texturas modificadas a MVC2/..."
-	$(TOOLS_LINUX)/import_textures.sh "$(TEXTURES_DIR)" "$(MVC2_DATA)" "$(MVC2_DATA)"
+	$(TOOLS_LINUX)/import_textures.sh "$(TEXTURES_DIR)" "$(MVC2_DATA)" "$(MVC2_DATA)" "$(ONLY)$(FILES)$(NAMES)"
 
-## extract-audio / dump-audio: Extrae todos los ADX a WAV y MP3
+## extract-audio / dump-audio: Extrae pistas de audio ADX a WAV y MP3 (Opcional: ONLY=... o TRACKS=...)
 extract-audio: dump-audio
 dump-audio:
-	@echo "[*] Extrayendo todas las pistas de audio ADX a WAV y MP3..."
-	python3 $(TOOLS_LINUX)/export_audio.py "$(MVC2_DATA)" "$(AUDIO_DIR)"
+	@echo "[*] Extrayendo pistas de audio ADX a WAV y MP3..."
+	python3 $(TOOLS_LINUX)/export_audio.py "$(MVC2_DATA)" "$(AUDIO_DIR)" "$(ONLY)$(TRACKS)$(FILES)$(NAMES)"
 
-## inject-audio / pack-audio: Reinyecta WAV/MP3 a ADX en MVC2/
+## inject-audio / pack-audio: Reinyecta WAV/MP3 a ADX en MVC2/ (Opcional: ONLY=... o TRACKS=...)
 inject-audio: pack-audio
 pack-audio:
 	@echo "[*] Reinyectando pistas de audio a formato CRI ADX en MVC2/..."
-	python3 $(TOOLS_LINUX)/import_audio.py "$(AUDIO_DIR)" "$(MVC2_DATA)"
+	python3 $(TOOLS_LINUX)/import_audio.py "$(AUDIO_DIR)" "$(MVC2_DATA)" "$(ONLY)$(TRACKS)$(FILES)$(NAMES)"
 
 ## gdi: Genera la imagen GDI completa (disc.gdi, track01, track02, track03)
 gdi:
 	@echo "[*] Generando imagen GDI..."
 	python3 $(TOOLS_LINUX)/build_gdi.py "$(OUTPUT_GDI)"
 
-## cdi: Genera la imagen CDI autobootable
+## cdi: Genera la imagen CDI autobootable (Sin dummy ~498MB, o con DUMMY=650)
 cdi:
 	@echo "[*] Generando imagen CDI..."
-	$(TOOLS_LINUX)/build_cdi.sh "$(OUTPUT_CDI)"
+	$(TOOLS_LINUX)/build_cdi.sh "$(OUTPUT_CDI)" "$(DUMMY)"
+
+## cdi-dummy: Genera la imagen CDI autobootable optimizada con 0DUMMY.DAT (hasta 650 MB para CD-R)
+cdi-dummy:
+	@echo "[*] Generando imagen CDI optimizada con 0DUMMY.DAT (hasta 650 MB)..."
+	$(TOOLS_LINUX)/build_cdi.sh "$(OUTPUT_CDI)" "650"
 
 ## convert-audio: Convierte audio individual a ADX
 convert-audio:
