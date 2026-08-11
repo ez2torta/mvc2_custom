@@ -44,13 +44,19 @@ help:
 	@echo "  make clean              Limpia imágenes generadas y archivos temporales"
 	@echo "========================================================================"
 
-## build-tools: Compila binarios nativos (scramble) e instala dependencias de modnao
+## build-tools: Compila binarios nativos (scramble, cdi4dc) e instala dependencias de Python y ModNao
 build-tools:
 	@echo "[*] Compilando herramienta scramble en C..."
 	gcc -O2 $(TOOLS_LINUX)/scramble.c -o $(TOOLS_LINUX)/scramble
+	@echo "[*] Compilando herramienta cdi4dc en C..."
+	gcc -O2 -I$(ROOT_DIR)/Tools/src/cdi4dc/common/inc -I$(ROOT_DIR)/Tools/src/cdi4dc/edc/inc -I$(ROOT_DIR)/Tools/src/cdi4dc/cdi4dc/inc \
+		$(ROOT_DIR)/Tools/src/cdi4dc/cdi4dc/src/*.c $(ROOT_DIR)/Tools/src/cdi4dc/common/src/*.c $(ROOT_DIR)/Tools/src/cdi4dc/edc/src/*.c \
+		-o $(TOOLS_LINUX)/cdi4dc
+	@echo "[*] Verificando dependencias de Python (pycdlib)..."
+	python3 -m pip install -r $(ROOT_DIR)/requirements.txt --break-system-packages --quiet 2>/dev/null || python3 -m pip install -r $(ROOT_DIR)/requirements.txt --quiet || true
 	@echo "[*] Verificando dependencias de ModNao..."
 	cd $(MODNAO_DIR) && npm install --silent
-	@echo "[✓] Herramientas listas."
+	@echo "[✓] Todas las herramientas y dependencias listas."
 
 ## extract-textures / dump-textures: Extrae todas las texturas de MVC2 a PNG
 extract-textures: dump-textures

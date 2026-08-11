@@ -1,0 +1,3 @@
+# Marvel vs Capcom 2 (Dreamcast) - Modding & Build Pipeline
+# Python dependencies for GDI and CDI disk image generation
+pycdlib>=1.12.0

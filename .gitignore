@@ -4,4 +4,11 @@ output_cdi/
 Extracted_Audio/WAV/
 Extracted_Audio/MP3/
 *.tmp
+*.bak
+*.cdi
+*.gdi
 .DS_Store
+__pycache__/
+*.pyc
+Tools/linux/cdi4dc
+Tools/linux/scramble
