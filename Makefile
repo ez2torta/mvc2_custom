@@ -116,6 +116,11 @@ multidisc-mini-gdi:
 	@echo "[*] Construyendo mini-compilación GDI: Menú + Super Puzzle Fighter II X..."
 	python3 $(TOOLS_LINUX)/multidisc_manager.py build-mini-gdi --output "$${OUT:-$(ROOT_DIR)/output_gdi_mini_puzzle}"
 
+## multidisc-holamundo: Mini-mini-experimento con solo el Navegador Dricas y Hola Mundo Dreamcast
+multidisc-holamundo:
+	@echo "[*] Construyendo mini-mini-compilación CDI: Solo Browser Dricas + Hola Mundo..."
+	python3 $(TOOLS_LINUX)/multidisc_manager.py build-holamundo --output "$${OUT:-$(OUTPUT_CDI)/hola_mundo_dreamcast.cdi}"
+
 ## multidisc-puzzle: Alias de multidisc-mini
 multidisc-puzzle: multidisc-mini
 
@@ -126,6 +131,14 @@ multidisc-custom:
 
 ## multidisc-inject: Alias de multidisc-custom
 multidisc-inject: multidisc-custom
+
+## multidisc-modular: Ensambla y compila el Capcom Fight Pack completo (5 juegos) desde Games/ y MVC2/
+multidisc-modular:
+	@echo "[*] Construyendo compilación multijuego completa (5 juegos) con ISO pre-masterizada y CDI..."
+	python3 $(TOOLS_LINUX)/multidisc_manager.py build-modular --output "$${OUT:-$(OUTPUT_CDI)/capcom_fight_pack.cdi}" --volume "CAPCOM_FIGHT_PACK"
+
+## multidisc-pack: Alias de multidisc-modular
+multidisc-pack: multidisc-modular
 
 ## multidisc-extract: Extrae un CDI multijuego preservando hardlinks
 multidisc-extract:

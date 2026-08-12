@@ -1,18 +1,40 @@
+# Build & Output Directories
 .hist/
-output_gdi/
-output_cdi/
+output_gdi*/
+output_cdi*/
+*_cdi/
+*_gdi/
 MultiGames/
 TDCFinal2/
 mvc2 fight kingdom/
 MVC2_MODS_*/
+_staging*
+
+# Extracted Media & Audio
 Extracted_Audio/WAV/
 Extracted_Audio/MP3/
-*.tmp
-*.bak
+Games/Frontend/ADXFILES/
+Games/Frontend/FANDISK/
+Games/Frontend/AR/
+Games/Frontend/MAPPING/
+Games/Frontend/UTILS/
+Games/Frontend/README.TXT
+
+# Disc Images & Large Files
 *.cdi
 *.gdi
+*.iso
+*.raw
+*.bin.bak
+
+# Temporary & Build Files
+*.tmp
+*.bak
+*.log
 .DS_Store
 __pycache__/
 *.pyc
+
+# Native Compiled Binaries
 Tools/linux/cdi4dc
 Tools/linux/scramble
