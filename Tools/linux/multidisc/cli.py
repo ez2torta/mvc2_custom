@@ -6,7 +6,7 @@ cli.py - Interfaz de línea de comandos unificada para el motor multidisco de Dr
 import os
 import argparse
 from .core.cdi_container import build_multidisc_cdi
-from .staging.extractor import extract_cdi_track2
+from .staging.extractor import extract_cdi_track2, extract_gdi
 from .packs.fight_pack import build_capcom_fight_pack_cdi
 from .packs.tests import build_mini_puzzle_cdi, build_mini_puzzle_gdi, build_hola_mundo_cdi
 from .packs.base import REPO_ROOT
@@ -15,10 +15,15 @@ def main():
     parser = argparse.ArgumentParser(description='Gestor de compilaciones Multijuego y Multi-Soundtrack para Dreamcast')
     subparsers = parser.add_subparsers(dest='command', help='Comandos disponibles')
 
-    # 1. extract
+    # 1. extract (CDI)
     p_extract = subparsers.add_parser('extract', help='Extrae un CDI multijuego preservando hardlinks')
     p_extract.add_argument('--input', '-i', required=True, help='Ruta al archivo .cdi origen (ej: TDCFinal2/disc.cdi)')
     p_extract.add_argument('--output', '-o', required=True, help='Directorio de salida para los juegos extraídos')
+
+    # 1.1 extract-gdi (GDI nativo GD-ROM)
+    p_extract_gdi = subparsers.add_parser('extract-gdi', help='Extrae todos los archivos de un volcado GDI de Dreamcast (LBA 45000)')
+    p_extract_gdi.add_argument('--input', '-i', required=True, help='Ruta al archivo disc.gdi o carpeta que lo contiene')
+    p_extract_gdi.add_argument('--output', '-o', required=True, help='Directorio de salida para los archivos extraídos')
 
     # 2. build (desde carpeta arbitraria)
     p_build = subparsers.add_parser('build', help='Construye un CDI multijuego desde estructura existente con de-duplicación')
@@ -52,6 +57,8 @@ def main():
 
     if args.command == 'extract':
         extract_cdi_track2(args.input, args.output)
+    elif args.command == 'extract-gdi':
+        extract_gdi(args.input, args.output)
     elif args.command == 'build':
         build_multidisc_cdi(args.input, args.output, volume_name=args.volume)
     elif args.command in ('build-modular', 'build-fightpack', 'build-4pack'):
