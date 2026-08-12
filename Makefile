@@ -49,6 +49,7 @@ help:
 	@echo "  make multidisc-build    Construye un CDI multijuego desde carpeta arbitraria (Uso: make multidisc-build IN=...)"
 	@echo "  make multidisc-extract  Extrae un CDI multijuego con hardlinks (Uso: make multidisc-extract CDI=...)"
 	@echo "  make extract-gdi        Extrae un volcado GDI de Dreamcast a carpeta limpia (Uso: make extract-gdi GDI=... OUT=...)"
+	@echo "  make inspect            Diagnóstico pre-armado de binarios SH-4, LBAs y espacio CD-R (Opcional: PATH=...)"
 	@echo ""
 	@echo "  --- HERRAMIENTAS SH-4 ---"
 	@echo "  make scramble           Scramblea un binario SH-4 (Uso: make scramble INPUT=... OUTPUT=...)"
@@ -133,6 +134,10 @@ multidisc-mini-gdi:
 multidisc-holamundo:
 	@echo "[*] Construyendo mini-mini-compilación CDI: Solo Browser Dricas + Hola Mundo..."
 	python3 $(TOOLS_LINUX)/multidisc_manager.py build-holamundo --output "$${OUT:-$(OUTPUT_CDI)/hola_mundo_dreamcast.cdi}"
+
+## inspect: Ejecuta diagnóstico pre-armado de binarios SH-4, LBAs y espacio CD-R (Opcional: FILE=... o BIN=...)
+inspect:
+	python3 $(TOOLS_LINUX)/multidisc_manager.py inspect $(if $(FILE)$(BIN)$(DIR),--path "$(FILE)$(BIN)$(DIR)",)
 
 ## extract-gdi: Extrae todos los archivos de un volcado GDI de Dreamcast (Uso: make extract-gdi GDI=... OUT=...)
 extract-gdi:

@@ -7,6 +7,7 @@ import os
 import shutil
 from .base import prepare_frontend_base, stage_game_files, REPO_ROOT, GAMES_DIR, FRONTEND_DEFAULT_DIR
 from ..staging.deduplicator import deduplicate_staging_directory
+from ..staging.inspector import run_preflight_inspection
 from ..core.cdi_container import build_multidisc_cdi
 
 def build_capcom_fight_pack_cdi(output_cdi_path: str, volume_name: str = "CAPCOM_FIGHT_PACK", custom_template_html: str = None, verbose: bool = True):
@@ -16,6 +17,15 @@ def build_capcom_fight_pack_cdi(output_cdi_path: str, volume_name: str = "CAPCOM
     - 2. Capcom vs SNK 2: English v1.2 (/JAPCVS) desde dump nativo GDI
     - 3. Super Street Fighter II X: Grand Master Challenge (/ST)
     """
+    # 0. Diagnóstico y sugerencias pre-armado
+    if verbose:
+        games_cfg = {
+            'GAME20': {'name': 'Marvel vs Capcom 2 (Nene Edition)', 'path': os.path.join(REPO_ROOT, 'MVC2')},
+            'JAPCVS': {'name': 'Capcom vs SNK 2 (English v1.2)', 'path': os.path.join(GAMES_DIR, 'CVS2')},
+            'ST': {'name': 'Super Street Fighter II X (ST)', 'path': os.path.join(GAMES_DIR, 'SSF2X')},
+        }
+        run_preflight_inspection(games_cfg, verbose=verbose)
+
     staging_dir = os.path.join(os.path.dirname(os.path.abspath(output_cdi_path)), "_staging_capcom_fightpack")
     shutil.rmtree(staging_dir, ignore_errors=True)
     os.makedirs(staging_dir, exist_ok=True)

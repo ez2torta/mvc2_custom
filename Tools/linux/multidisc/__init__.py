@@ -7,6 +7,7 @@ from .core.cdi_container import package_audio_data_cdi, build_multidisc_cdi
 from .core.edc_ecc import get_libedc
 from .staging.deduplicator import deduplicate_staging_directory
 from .staging.extractor import extract_cdi_track2, extract_gdi
+from .staging.inspector import inspect_sh4_binary, run_preflight_inspection
 from .packs.fight_pack import build_capcom_fight_pack_cdi
 from .packs.tests import build_mini_puzzle_cdi, build_mini_puzzle_gdi, build_hola_mundo_cdi
 from .packs.base import prepare_frontend_base, stage_game_files
@@ -19,6 +20,8 @@ __all__ = [
     'deduplicate_staging_directory',
     'extract_cdi_track2',
     'extract_gdi',
+    'inspect_sh4_binary',
+    'run_preflight_inspection',
     'build_capcom_fight_pack_cdi',
     'build_mini_puzzle_cdi',
     'build_mini_puzzle_gdi',

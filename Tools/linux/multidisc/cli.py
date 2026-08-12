@@ -25,6 +25,10 @@ def main():
     p_extract_gdi.add_argument('--input', '-i', required=True, help='Ruta al archivo disc.gdi o carpeta que lo contiene')
     p_extract_gdi.add_argument('--output', '-o', required=True, help='Directorio de salida para los archivos extraídos')
 
+    # 1.2 inspect (diagnóstico pre-armado)
+    p_insp = subparsers.add_parser('inspect', help='Ejecuta diagnóstico pre-armado y sugerencias de compatibilidad de binarios')
+    p_insp.add_argument('--path', '-p', default=None, help='Ruta a un binario SH-4 específico o directorio de juego')
+
     # 2. build (desde carpeta arbitraria)
     p_build = subparsers.add_parser('build', help='Construye un CDI multijuego desde estructura existente con de-duplicación')
     p_build.add_argument('--input', '-i', required=True, help='Directorio con la estructura de juegos y hardlinks')
@@ -59,6 +63,23 @@ def main():
         extract_cdi_track2(args.input, args.output)
     elif args.command == 'extract-gdi':
         extract_gdi(args.input, args.output)
+    elif args.command == 'inspect':
+        from .staging.inspector import run_preflight_inspection, inspect_sh4_binary
+        if args.path and os.path.isfile(args.path):
+            diag = inspect_sh4_binary(args.path)
+            print(f"[*] Inspección de binario individual: {args.path}")
+            for k, v in diag.items():
+                print(f"  {k:15s}: {v}")
+        else:
+            from .packs.base import GAMES_DIR
+            games_cfg = {
+                'GAME20': {'name': 'Marvel vs Capcom 2 (Nene Edition)', 'path': os.path.join(REPO_ROOT, 'MVC2')},
+                'JAPCVS': {'name': 'Capcom vs SNK 2 (English v1.2)', 'path': os.path.join(GAMES_DIR, 'CVS2')},
+                'ST': {'name': 'Super Street Fighter II X (ST)', 'path': os.path.join(GAMES_DIR, 'SSF2X')},
+            }
+            if args.path and os.path.isdir(args.path):
+                games_cfg = {'CUSTOM': {'name': os.path.basename(args.path), 'path': args.path}}
+            run_preflight_inspection(games_cfg)
     elif args.command == 'build':
         build_multidisc_cdi(args.input, args.output, volume_name=args.volume)
     elif args.command in ('build-modular', 'build-fightpack', 'build-4pack'):
