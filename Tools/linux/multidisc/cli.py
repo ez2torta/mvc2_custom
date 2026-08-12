@@ -1,0 +1,73 @@
+#!/usr/bin/env python3
+"""
+cli.py - Interfaz de línea de comandos unificada para el motor multidisco de Dreamcast.
+"""
+
+import os
+import argparse
+from .core.cdi_container import build_multidisc_cdi
+from .staging.extractor import extract_cdi_track2
+from .packs.fight_pack import build_capcom_fight_pack_cdi
+from .packs.tests import build_mini_puzzle_cdi, build_mini_puzzle_gdi, build_hola_mundo_cdi
+from .packs.base import REPO_ROOT
+
+def main():
+    parser = argparse.ArgumentParser(description='Gestor de compilaciones Multijuego y Multi-Soundtrack para Dreamcast')
+    subparsers = parser.add_subparsers(dest='command', help='Comandos disponibles')
+
+    # 1. extract
+    p_extract = subparsers.add_parser('extract', help='Extrae un CDI multijuego preservando hardlinks')
+    p_extract.add_argument('--input', '-i', required=True, help='Ruta al archivo .cdi origen (ej: TDCFinal2/disc.cdi)')
+    p_extract.add_argument('--output', '-o', required=True, help='Directorio de salida para los juegos extraídos')
+
+    # 2. build (desde carpeta arbitraria)
+    p_build = subparsers.add_parser('build', help='Construye un CDI multijuego desde estructura existente con de-duplicación')
+    p_build.add_argument('--input', '-i', required=True, help='Directorio con la estructura de juegos y hardlinks')
+    p_build.add_argument('--output', '-o', required=True, help='Ruta del archivo .cdi de salida')
+    p_build.add_argument('--volume', '-v', default='MULTIDISC', help='Nombre de volumen ISO')
+
+    # 3. build-modular / build-fightpack / build-4pack
+    for cmd_name in ['build-modular', 'build-fightpack', 'build-4pack']:
+        p_mod = subparsers.add_parser(cmd_name, help='Compila el Capcom Fight Pack (MvC2 Nene + CvS2 English + Super Turbo)')
+        p_mod.add_argument('--output', '-o', default=None, help='Ruta del archivo .cdi de salida')
+        p_mod.add_argument('--template', '-t', default=None, help='Ruta a plantilla HTML personalizada (opcional)')
+        p_mod.add_argument('--volume', '-v', default='CAPCOM_FIGHT_PACK', help='Nombre de volumen ISO')
+
+    # 4. build-mini
+    p_mini = subparsers.add_parser('build-mini', help='Mini-experimento: Menú + Super Puzzle Fighter II X (CDI)')
+    p_mini.add_argument('--output', '-o', default=None, help='Ruta del archivo .cdi de salida')
+    p_mini.add_argument('--volume', '-v', default='PUZZLE_FIGHTER', help='Nombre de volumen ISO')
+
+    # 5. build-mini-gdi
+    p_mini_gdi = subparsers.add_parser('build-mini-gdi', help='Mini-experimento: Menú + Super Puzzle Fighter II X (GDI)')
+    p_mini_gdi.add_argument('--output', '-o', default=None, help='Directorio de salida GDI')
+    p_mini_gdi.add_argument('--volume', '-v', default='PUZZLE_FIGHTER', help='Nombre de volumen ISO')
+
+    # 6. build-holamundo
+    p_hola = subparsers.add_parser('build-holamundo', help='Mini-mini-experimento: Solo Browser Hola Mundo (CDI)')
+    p_hola.add_argument('--output', '-o', default=None, help='Ruta del archivo .cdi de salida')
+    p_hola.add_argument('--volume', '-v', default='HOLA_MUNDO', help='Nombre de volumen ISO')
+
+    args = parser.parse_args()
+
+    if args.command == 'extract':
+        extract_cdi_track2(args.input, args.output)
+    elif args.command == 'build':
+        build_multidisc_cdi(args.input, args.output, volume_name=args.volume)
+    elif args.command in ('build-modular', 'build-fightpack', 'build-4pack'):
+        out_cdi = args.output if args.output else os.path.join(REPO_ROOT, 'output_cdi', 'capcom_fight_pack.cdi')
+        build_capcom_fight_pack_cdi(out_cdi, volume_name=args.volume, custom_template_html=args.template)
+    elif args.command == 'build-mini':
+        out_cdi = args.output if args.output else os.path.join(REPO_ROOT, 'output_cdi', 'mini_puzzle_multidisc.cdi')
+        build_mini_puzzle_cdi(out_cdi, volume_name=args.volume)
+    elif args.command == 'build-mini-gdi':
+        out_gdi = args.output if args.output else os.path.join(REPO_ROOT, 'output_gdi_mini_puzzle')
+        build_mini_puzzle_gdi(out_gdi, volume_name=args.volume)
+    elif args.command == 'build-holamundo':
+        out_cdi = args.output if args.output else os.path.join(REPO_ROOT, 'output_cdi', 'hola_mundo_dreamcast.cdi')
+        build_hola_mundo_cdi(out_cdi, volume_name=args.volume)
+    else:
+        parser.print_help()
+
+if __name__ == '__main__':
+    main()
