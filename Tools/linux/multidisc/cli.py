@@ -8,7 +8,7 @@ import argparse
 from .core.cdi_container import build_multidisc_cdi
 from .staging.extractor import extract_cdi_track2, extract_gdi
 from .packs.fight_pack import build_capcom_fight_pack_cdi
-from .packs.tests import build_mini_puzzle_cdi, build_mini_puzzle_gdi, build_hola_mundo_cdi
+from .packs.tests import build_mini_puzzle_cdi, build_mini_puzzle_gdi, build_hola_mundo_cdi, build_mini_cvs1j_cdi
 from .packs.base import REPO_ROOT
 
 def main():
@@ -46,6 +46,11 @@ def main():
     p_mini = subparsers.add_parser('build-mini', help='Mini-experimento: Menú + Super Puzzle Fighter II X (CDI)')
     p_mini.add_argument('--output', '-o', default=None, help='Ruta del archivo .cdi de salida')
     p_mini.add_argument('--volume', '-v', default='PUZZLE_FIGHTER', help='Nombre de volumen ISO')
+
+    # 4.1 build-mini-cvs
+    p_mini_cvs = subparsers.add_parser('build-mini-cvs', help='Mini-experimento: Menú Dricas + Capcom vs. SNK Japan (LBA 45000 CDI)')
+    p_mini_cvs.add_argument('--output', '-o', default=None, help='Ruta del archivo .cdi de salida')
+    p_mini_cvs.add_argument('--volume', '-v', default='CAPCOM_VS_SNK', help='Nombre de volumen ISO')
 
     # 5. build-mini-gdi
     p_mini_gdi = subparsers.add_parser('build-mini-gdi', help='Mini-experimento: Menú + Super Puzzle Fighter II X (GDI)')
@@ -88,6 +93,9 @@ def main():
     elif args.command == 'build-mini':
         out_cdi = args.output if args.output else os.path.join(REPO_ROOT, 'output_cdi', 'mini_puzzle_multidisc.cdi')
         build_mini_puzzle_cdi(out_cdi, volume_name=args.volume)
+    elif args.command == 'build-mini-cvs':
+        out_cdi = args.output if args.output else os.path.join(REPO_ROOT, 'output_cdi', 'mini_cvs1j_multidisc.cdi')
+        build_mini_cvs1j_cdi(out_cdi, volume_name=args.volume)
     elif args.command == 'build-mini-gdi':
         out_gdi = args.output if args.output else os.path.join(REPO_ROOT, 'output_gdi_mini_puzzle')
         build_mini_puzzle_gdi(out_gdi, volume_name=args.volume)
@@ -99,3 +107,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

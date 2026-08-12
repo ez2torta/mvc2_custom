@@ -82,3 +82,30 @@ def build_hola_mundo_cdi(output_cdi_path: str, volume_name: str = "HOLA_MUNDO", 
     res = build_multidisc_cdi(staging_dir, output_cdi_path, volume_name=volume_name, verbose=verbose)
     shutil.rmtree(staging_dir, ignore_errors=True)
     return res
+
+def build_mini_cvs1j_cdi(output_cdi_path: str, volume_name: str = "CAPCOM_VS_SNK", verbose: bool = True):
+    """
+    Mini-experimento: Menú interactivo Dricas (LBA 45000) + Capcom vs. SNK Japan en CDI autoboot.
+    """
+    staging_dir = os.path.join(os.path.dirname(os.path.abspath(output_cdi_path)), "_staging_mini_cvs1j")
+    shutil.rmtree(staging_dir, ignore_errors=True)
+    os.makedirs(staging_dir, exist_ok=True)
+
+    if verbose:
+        print("========================================================================")
+        print("     Mini-Experimento: Menú Dricas + Capcom vs. SNK Japan (LBA 45000 CDI)")
+        print("========================================================================")
+
+    # 1. Preparar Frontend con template mini_cvs1j
+    tpl = os.path.join(FRONTEND_DEFAULT_DIR, "DPWWW", "templates", "mini_cvs1j.html")
+    prepare_frontend_base(staging_dir, template_html_path=tpl)
+
+    # 2. Agregar Capcom vs. SNK Japan (CVS1J)
+    cvs_src = os.path.join(GAMES_DIR, "CVS1J")
+    stage_game_files(cvs_src, os.path.join(staging_dir, "CVS1J"))
+
+    # 3. Compilar CDI a LBA 45000
+    res = build_multidisc_cdi(staging_dir, output_cdi_path, volume_name=volume_name, verbose=verbose)
+    shutil.rmtree(staging_dir, ignore_errors=True)
+    return res
+

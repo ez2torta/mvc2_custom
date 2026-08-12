@@ -70,18 +70,24 @@ def prepare_frontend_base(staging_dir: str, frontend_src_dir: str = None, templa
 
 def stage_game_files(src_dir: str, dst_dir: str, custom_1st_read: str = None):
     """
-    Enlaza (mediante hardlinks) todos los archivos de un módulo de juego hacia staging.
+    Enlaza (mediante hardlinks) todos los archivos y subdirectorios de un módulo de juego hacia staging.
     Si se especifica custom_1st_read, inyecta dicho ejecutable en lugar del original.
     """
     os.makedirs(dst_dir, exist_ok=True)
-    for item in os.listdir(src_dir):
-        if item == '1ST_READ.BIN' and custom_1st_read:
-            continue
-        s_item = os.path.join(src_dir, item)
-        d_item = os.path.join(dst_dir, item)
-        if os.path.isfile(s_item):
-            if not os.path.exists(d_item):
-                os.link(s_item, d_item)
+    for root, dirs, files in os.walk(src_dir):
+        rel = os.path.relpath(root, src_dir)
+        d_root = os.path.join(dst_dir, rel) if rel != '.' else dst_dir
+        os.makedirs(d_root, exist_ok=True)
+        for f in files:
+            if rel == '.' and f == '1ST_READ.BIN' and custom_1st_read:
+                continue
+            s_f = os.path.join(root, f)
+            d_f = os.path.join(d_root, f)
+            if not os.path.exists(d_f):
+                try:
+                    os.link(s_f, d_f)
+                except OSError:
+                    shutil.copy2(s_f, d_f)
 
     if custom_1st_read and os.path.exists(custom_1st_read):
         d_1st = os.path.join(dst_dir, '1ST_READ.BIN')
@@ -89,3 +95,4 @@ def stage_game_files(src_dir: str, dst_dir: str, custom_1st_read: str = None):
             try: os.remove(d_1st)
             except: pass
         shutil.copy2(custom_1st_read, d_1st)
+
