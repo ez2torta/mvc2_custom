@@ -74,16 +74,17 @@ def inspect_sh4_binary(bin_path: str):
                 'count_be': c_be
             })
 
-    # Clasificación de compatibilidad LBA
-    has_11702_or_30 = any(m['lba'] in (11702, 11730) for m in lba_info['matches'])
-    has_45166 = any(m['lba'] == 45166 for m in lba_info['matches']) or (b'\xa6\x00' in data and b'\x6e\xb0' not in data)
-    
-    if has_11702_or_30:
-        lba_info['type'] = 'BINHACK_11702'
-        lba_info['target_lba'] = 11702
-    elif has_45166:
+    # Clasificación de compatibilidad LBA (SH-4 es Little-Endian por defecto)
+    has_45166 = any(m['lba'] == 45166 and m['count_le'] > 0 for m in lba_info['matches'])
+    has_11702 = any(m['lba'] == 11702 and m['count_le'] > 0 for m in lba_info['matches'])
+    has_11730 = any(m['lba'] == 11730 and m['count_le'] > 0 for m in lba_info['matches'])
+
+    if has_45166:
         lba_info['type'] = 'BINHACK_45166'
         lba_info['target_lba'] = 45166
+    elif has_11702 or has_11730:
+        lba_info['type'] = 'BINHACK_11702'
+        lba_info['target_lba'] = 11702
     else:
         lba_info['type'] = 'GDFS_DYNAMIC'
 

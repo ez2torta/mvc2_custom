@@ -7,7 +7,8 @@ Disable Handicap
 Enhanced Training Mode
 Always Show "WINS X"
 Japanese Names [Japanese Names]
-More Music [Shuffle - 32]
+Aerial Rave
+Binhack [GDI - 45166]
 
  COSMETICS
 ===========
@@ -19,7 +20,6 @@ TEXT: Handicap []
 Dark Theme Character Select
 Dark Theme Loading Tunnel
 B.Wolverine
-Shuffle Songs - 32
 
 
-Created with the MVC2 MOD TOOL 2026-08-09 [ https://paxtez.zachd.com/]
+Created with the MVC2 MOD TOOL 2026-08-12 [ https://paxtez.zachd.com/]

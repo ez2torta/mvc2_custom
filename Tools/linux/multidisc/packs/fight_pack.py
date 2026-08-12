@@ -48,9 +48,8 @@ def build_capcom_fight_pack_cdi(output_cdi_path: str, volume_name: str = "CAPCOM
 
     # 2. Agregar los 3 juegos
     print("[*] Enlazando juegos a staging...")
-    vanilla_1st_read = os.path.join(GAMES_DIR, "MVC2_Vanilla", "1ST_READ.BIN")
-    # GAME20: MvC2 Nene Edition
-    stage_game_files(os.path.join(REPO_ROOT, "MVC2"), os.path.join(staging_dir, "GAME20"), custom_1st_read=vanilla_1st_read)
+    # GAME20: MvC2 Nene Edition (con mods activos y calibrado a LBA 45166)
+    stage_game_files(os.path.join(REPO_ROOT, "MVC2"), os.path.join(staging_dir, "GAME20"))
     # JAPCVS: CvS2 English v1.2 (GDI Nativo)
     stage_game_files(os.path.join(GAMES_DIR, "CVS2"), os.path.join(staging_dir, "JAPCVS"))
     # ST: SSF2X Super Turbo
