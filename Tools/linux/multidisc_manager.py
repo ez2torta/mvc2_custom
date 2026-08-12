@@ -1152,21 +1152,20 @@ def build_hola_mundo_cdi(output_cdi_path, volume_name="HOLA_MUNDO", verbose=True
     shutil.rmtree(staging_dir, ignore_errors=True)
     return res
 
-def build_capcom_4pack_cdi(output_cdi_path, volume_name="CAPCOM_4PACK", verbose=True):
+def build_capcom_4pack_cdi(output_cdi_path, volume_name="CAPCOM_FIGHT_PACK", verbose=True):
     """
-    Construye la compilación multijuego Capcom Fight Pack (4 Juegos):
+    Construye la compilación multijuego Capcom Fight Pack (3 Juegos - CD-R 700 MB):
     - Marvel vs Capcom 2: Nene Edition (GAME20)
-    - Marvel vs Capcom 2: Vanilla (USAMVC) con de-duplicación inteligente
-    - Capcom vs SNK 2: Millionaire Fighting 2001 (JAPCVS)
+    - Capcom vs SNK 2: English v1.2 (JAPCVS) con corrección dinámica de TOC LBA 45021
     - Super Street Fighter II X: Grand Master Challenge (ST)
     """
     games_dir = os.path.join(ROOT_DIR, "Games")
-    staging_dir = os.path.join(os.path.dirname(os.path.abspath(output_cdi_path)), "_staging_capcom_4pack")
+    staging_dir = os.path.join(os.path.dirname(os.path.abspath(output_cdi_path)), "_staging_capcom_3pack")
     shutil.rmtree(staging_dir, ignore_errors=True)
     os.makedirs(staging_dir, exist_ok=True)
 
     print("========================================================================")
-    print("   Capcom Fight Pack 4-en-1: MvC2 Nene + Vanilla + CvS2 + Super Turbo")
+    print("   Capcom Fight Pack 3-en-1 (CD-R 700MB): MvC2 Nene + CvS2 English + ST")
     print("========================================================================")
     print(f"[*] Directorio de Módulos: {games_dir}")
     print(f"[*] CDI Destino          : {output_cdi_path}")
@@ -1194,7 +1193,7 @@ def build_capcom_4pack_cdi(output_cdi_path, volume_name="CAPCOM_4PACK", verbose=
                 if not os.path.exists(s_path):
                     shutil.copy2(os.path.join(dpfont_dst, p_font), s_path)
 
-    # DPWWW con Menú HTML 4-en-1
+    # DPWWW con Menú HTML 3-en-1
     dpwww_dst = os.path.join(staging_dir, 'DPWWW')
     os.makedirs(dpwww_dst, exist_ok=True)
 
@@ -1202,7 +1201,7 @@ def build_capcom_4pack_cdi(output_cdi_path, volume_name="CAPCOM_4PACK", verbose=
         '<html>\r\n'
         '<head>\r\n'
         '<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">\r\n'
-        '<title>Capcom Fight Pack 4-in-1</title>\r\n'
+        '<title>Capcom Fight Pack</title>\r\n'
         '<meta name=x-uirequest content=nohscroll>\r\n'
         '<meta name=x-uirequest content=novscroll>\r\n'
         '</head>\r\n'
@@ -1211,30 +1210,26 @@ def build_capcom_4pack_cdi(output_cdi_path, volume_name="CAPCOM_4PACK", verbose=
         '<br>\r\n'
         '<table border="0" cellpadding="2" cellspacing="0" width="94%">\r\n'
         '<tr><td align="center">\r\n'
-        '<font size="+3" color="#FFCC00" face="Arial, sans-serif"><b>CAPCOM FIGHT PACK 4-IN-1</b></font><br>\r\n'
-        '<font size="2" color="#00FFCC">Sega Dreamcast | Multidisc Custom Edition</font>\r\n'
+        '<font size="+3" color="#FFCC00" face="Arial, sans-serif"><b>CAPCOM FIGHT PACK</b></font><br>\r\n'
+        '<font size="2" color="#00FFCC">Sega Dreamcast | 3-in-1 CD-R Edition</font>\r\n'
         '</td></tr>\r\n'
         '</table>\r\n'
-        '<br>\r\n'
-        '<table border="2" bordercolor="#00FFCC" cellpadding="8" cellspacing="0" bgcolor="#001840" width="88%">\r\n'
+        '<br><br>\r\n'
+        '<table border="2" bordercolor="#00FFCC" cellpadding="10" cellspacing="0" bgcolor="#001840" width="90%">\r\n'
         '<tr>\r\n'
         '<td align="left" width="70%"><font size="+1" color="#FFFF00"><b>1. Marvel vs Capcom 2 (Nene Edition)</b></font><br><font size="2" color="#AAAAAA">Custom Audio Tracks + Modded Sprites</font></td>\r\n'
-        '<td align="center" width="30%"><a href="x-avefront://---.dream/proc/launch/20"><font size="+1" color="#00FF00"><b>[ JUGAR ]</b></font></a></td>\r\n'
+        '<td align="center" width="30%"><a href="x-avefront://---.dream/proc/launch/20"><font size="+2" color="#00FF00"><b>[ JUGAR ]</b></font></a></td>\r\n'
         '</tr>\r\n'
         '<tr>\r\n'
-        '<td align="left"><font size="+1" color="#FFFFFF"><b>2. Marvel vs Capcom 2 (Vanilla)</b></font><br><font size="2" color="#AAAAAA">Original Commercial Release</font></td>\r\n'
-        '<td align="center"><a href="x-avefront://---.dream/proc/launch/7"><font size="+1" color="#00FF00"><b>[ JUGAR ]</b></font></a></td>\r\n'
+        '<td align="left"><font size="+1" color="#FFCC00"><b>2. Capcom vs SNK 2 (English v1.2)</b></font><br><font size="2" color="#AAAAAA">Millionaire Fighting 2001 | English Translation</font></td>\r\n'
+        '<td align="center"><a href="x-avefront://---.dream/proc/launch/3"><font size="+2" color="#00FF00"><b>[ JUGAR ]</b></font></a></td>\r\n'
         '</tr>\r\n'
         '<tr>\r\n'
-        '<td align="left"><font size="+1" color="#FFCC00"><b>3. Capcom vs SNK 2: Millionaire 2001</b></font><br><font size="2" color="#AAAAAA">Arcade Fighting | 6 Grooves</font></td>\r\n'
-        '<td align="center"><a href="x-avefront://---.dream/proc/launch/3"><font size="+1" color="#00FF00"><b>[ JUGAR ]</b></font></a></td>\r\n'
-        '</tr>\r\n'
-        '<tr>\r\n'
-        '<td align="left"><font size="+1" color="#FF9933"><b>4. Super Street Fighter II X (ST)</b></font><br><font size="2" color="#AAAAAA">Grand Master Challenge</font></td>\r\n'
-        '<td align="center"><a href="x-avefront://---.dream/proc/launch/5"><font size="+1" color="#00FF00"><b>[ JUGAR ]</b></font></a></td>\r\n'
+        '<td align="left"><font size="+1" color="#FF9933"><b>3. Super Street Fighter II X (ST)</b></font><br><font size="2" color="#AAAAAA">Grand Master Challenge</font></td>\r\n'
+        '<td align="center"><a href="x-avefront://---.dream/proc/launch/5"><font size="+2" color="#00FF00"><b>[ JUGAR ]</b></font></a></td>\r\n'
         '</tr>\r\n'
         '</table>\r\n'
-        '<br>\r\n'
+        '<br><br>\r\n'
         '<font size="2" color="#7799BB">Antigravity Multi-Game Engine | Auto-boot MIL-CD</font>\r\n'
         '</center>\r\n'
         '</body>\r\n'
@@ -1245,8 +1240,8 @@ def build_capcom_4pack_cdi(output_cdi_path, volume_name="CAPCOM_4PACK", verbose=
         with open(os.path.join(dpwww_dst, fname), 'wb') as hf:
             hf.write(menu_html.encode('latin1'))
 
-    # 2. Agregar los 4 juegos
-    def stage_game_files(src_dir, dst_dir, custom_1st_read=None):
+    # 2. Agregar los 3 juegos
+    def stage_game_files(src_dir, dst_dir, custom_1st_read=None, patch_lba=None):
         os.makedirs(dst_dir, exist_ok=True)
         for item in os.listdir(src_dir):
             if item == '1ST_READ.BIN' and custom_1st_read:
@@ -1255,7 +1250,17 @@ def build_capcom_4pack_cdi(output_cdi_path, volume_name="CAPCOM_4PACK", verbose=
             d_item = os.path.join(dst_dir, item)
             if os.path.isfile(s_item):
                 if not os.path.exists(d_item):
-                    os.link(s_item, d_item)
+                    if patch_lba and item in ('1ST_READ.BIN', '2_DP.BIN'):
+                        # Copiar y parchear LBA en staging sin tocar los archivos de origen
+                        old_val, new_val = patch_lba
+                        data = bytearray(open(s_item, 'rb').read())
+                        old_be = struct.pack('>I', old_val)
+                        new_be = struct.pack('>I', new_val)
+                        data = data.replace(old_be, new_be)
+                        with open(d_item, 'wb') as df:
+                            df.write(data)
+                    else:
+                        os.link(s_item, d_item)
         if custom_1st_read and os.path.exists(custom_1st_read):
             d_1st = os.path.join(dst_dir, '1ST_READ.BIN')
             if os.path.exists(d_1st):
@@ -1267,14 +1272,12 @@ def build_capcom_4pack_cdi(output_cdi_path, volume_name="CAPCOM_4PACK", verbose=
     vanilla_1st_read = os.path.join(games_dir, "MVC2_Vanilla", "1ST_READ.BIN")
     # GAME20: MvC2 Nene (con assets custom de MVC2/ y ejecutable limpio de sistema de archivos sin tocar MVC2/1ST_READ.BIN)
     stage_game_files(os.path.join(ROOT_DIR, "MVC2"), os.path.join(staging_dir, "GAME20"), custom_1st_read=vanilla_1st_read)
-    # USAMVC: MvC2 Vanilla
-    stage_game_files(os.path.join(games_dir, "MVC2_Vanilla"), os.path.join(staging_dir, "USAMVC"))
-    # JAPCVS: CvS2
-    stage_game_files(os.path.join(games_dir, "CVS2"), os.path.join(staging_dir, "JAPCVS"))
+    # JAPCVS: CvS2 English v1.2 (con parche dinámico de Root Dir LBA 11730 -> 45021 en staging)
+    stage_game_files(os.path.join(games_dir, "CVS2"), os.path.join(staging_dir, "JAPCVS"), patch_lba=(11730, 45021))
     # ST: SSF2X Super Turbo
     stage_game_files(os.path.join(games_dir, "SSF2X"), os.path.join(staging_dir, "ST"))
 
-    # 3. De-duplicación de assets (especialmente entre MvC2 Nene y Vanilla)
+    # 3. De-duplicación de assets
     deduplicate_staging_directory(staging_dir, verbose=verbose)
 
     # 4. Compilar CDI autoboot
