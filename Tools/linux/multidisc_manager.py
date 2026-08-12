@@ -56,13 +56,14 @@ def make_dir_record(lba, size, flags, name_bytes):
     buf[33:33+name_len] = name_bytes
     return bytes(buf)
 
-def build_shared_extent_iso(source_tree_dir, output_iso_path, volume_name="MULTIDISC", ip_bin_path=None, verbose=True):
+def build_shared_extent_iso(source_tree_dir, output_iso_path, volume_name="MULTIDISC", ip_bin_path=None, base_lba=45000, verbose=True):
     """
     Genera un archivo ISO9660 Nivel 1/2 en Python puro con soporte completo para
-    Shared Extents (múltiples rutas apuntando al mismo LBA de inicio para hardlinks).
+    Shared Extents (múltiples rutas apuntando al mismo LBA de inicio para hardlinks)
+    masterizado a base_lba (45000 para compilaciones multijuego Audio/Data).
     """
     print("========================================================================")
-    print("    Generador ISO9660 con De-duplicación de Sectores (Shared Extents)")
+    print(f"    Generador ISO9660 con De-duplicación de Sectores (Base LBA: {base_lba})")
     print("========================================================================")
     print(f"[*] Directorio Origen: {source_tree_dir}")
     print(f"[*] Nombre Volumen   : {volume_name}")
@@ -93,47 +94,46 @@ def build_shared_extent_iso(source_tree_dir, output_iso_path, volume_name="MULTI
     print(f"[+] Total directorios: {len(dirs):,}")
 
     # 2. Planificar el layout de LBA
-    # Sectores del sistema:
-    # 0..15: System area (IP.BIN)
-    # 16: PVD
-    # 17: VDST (Volume Descriptor Set Terminator)
-    # 18..19: Little/Big Endian Path Tables
-    # 20..: Tablas de directorios
-    pvd_lba = 16
-    vdst_lba = 17
-    l_path_table_lba = 18
-    m_path_table_lba = 19
-    
-    dir_start_lba = 20
-    current_dir_lba = dir_start_lba
+    pvd_lba = base_lba + 16
+    vdst_lba = base_lba + 17
+    l_path_table_lba = base_lba + 18
+    m_path_table_lba = base_lba + 19
+    dir_start_rel = 20
+    current_dir_rel = dir_start_rel
 
-    # 3. Asignar LBAs para directorios
+    def append_dir_entry(dir_sectors_buf, entry_bytes):
+        curr_offset = len(dir_sectors_buf) % 2048
+        rem = 2048 - curr_offset
+        if len(entry_bytes) > rem:
+            dir_sectors_buf.extend(b'\x00' * rem)
+        dir_sectors_buf.extend(entry_bytes)
+
+    # 3. Asignar LBAs para directorios con alineación estricta a sectores de 2048 bytes
     for d in dirs:
-        d['lba'] = current_dir_lba
-        # Calcular tamaño del directorio en bytes
-        # . y ..
-        entries_len = len(make_dir_record(0, 0, 2, b'\x00')) + len(make_dir_record(0, 0, 2, b'\x01'))
+        d['lba'] = base_lba + current_dir_rel
+        dir_buf = bytearray()
+        append_dir_entry(dir_buf, make_dir_record(0, 0, 2, b'\x00'))
+        append_dir_entry(dir_buf, make_dir_record(0, 0, 2, b'\x01'))
         for s in d['subdirs']:
-            entries_len += len(make_dir_record(0, 0, 2, s.upper().encode('ascii')))
+            append_dir_entry(dir_buf, make_dir_record(0, 0, 2, s.upper().encode('ascii')))
         for f in d['files']:
             fn = f.upper()
             if ';' not in fn: fn += ';1'
-            entries_len += len(make_dir_record(0, 0, 0, fn.encode('ascii', errors='ignore')))
+            append_dir_entry(dir_buf, make_dir_record(0, 0, 0, fn.encode('ascii', errors='ignore')))
         
-        sectors_needed = max(1, (entries_len + 2047) // 2048)
+        sectors_needed = max(1, (len(dir_buf) + 2047) // 2048)
         d['size'] = sectors_needed * 2048
-        current_dir_lba += sectors_needed
+        current_dir_rel += sectors_needed
 
-    data_start_lba = current_dir_lba
+    data_start_rel = current_dir_rel
+    current_data_rel = data_start_rel
 
     # 4. Asignar LBAs para archivos (con de-duplicación por inodo / hardlink)
     inode_to_lba = {}
-    unique_file_tasks = [] # (full_path, lba, size)
+    unique_file_tasks = []
     unique_count = 0
     shared_count = 0
     saved_bytes = 0
-
-    current_data_lba = data_start_lba
 
     for d in dirs:
         d['file_records'] = []
@@ -148,73 +148,43 @@ def build_shared_extent_iso(source_tree_dir, output_iso_path, volume_name="MULTI
                 shared_count += 1
                 saved_bytes += size
             else:
-                file_lba = current_data_lba
+                file_lba = base_lba + current_data_rel
                 inode_to_lba[key] = file_lba
                 sec_count = (size + 2047) // 2048
-                current_data_lba += max(1, sec_count)
+                current_data_rel += max(1, sec_count)
                 unique_file_tasks.append((full_p, file_lba, size))
                 unique_count += 1
 
             d['file_records'].append((f, file_lba, size))
 
-    total_sectors = current_data_lba
+    total_iso_sectors = current_data_rel
+    print(f"[+] Root directory LBA = {dirs[0]['lba']} (Base LBA: {base_lba})")
     print(f"[+] Archivos únicos a escribir : {unique_count:,}")
     print(f"[+] Archivos enlazados (Hardlinks): {shared_count:,} (Ahorro: {saved_bytes / (1024*1024):.2f} MB!)")
-    print(f"[+] Espacio final de la ISO    : {total_sectors * 2048:,} bytes ({total_sectors * 2048 / (1024*1024):.2f} MB)")
+    print(f"[+] Espacio final de la ISO    : {total_iso_sectors * 2048:,} bytes ({total_iso_sectors * 2048 / (1024*1024):.2f} MB)")
 
     # 5. Escribir archivo ISO
     with open(output_iso_path, 'wb') as iso_f:
-        # 5.1 System Area (Sectores 0..15 - IP.BIN)
-        ip_data = bytearray(16 * 2048)
+        # 5.1 System Area (Sectores 0..15: IP.BIN)
+        ip_data = bytearray(32768)
         if ip_bin_path and os.path.exists(ip_bin_path):
             with open(ip_bin_path, 'rb') as ip_f:
                 raw_ip = ip_f.read(32768)
                 ip_data[:len(raw_ip)] = raw_ip
         iso_f.write(ip_data)
 
-        # 5.2 PVD (Sector 16)
-        pvd = bytearray(2048)
-        pvd[0] = 1 # Type 1
-        pvd[1:6] = b'CD001'
-        pvd[6] = 1 # Version 1
-        pvd[8:40] = b'SEGA SEGAKATANA                 ' # System ID
-        pvd[40:72] = volume_name.upper().ljust(32).encode('ascii')[:32] # Volume ID
-        pvd[80:88] = encode_both_32(total_sectors)
-        pvd[120:124] = encode_both_16(1) # Volume Set Size
-        pvd[124:128] = encode_both_16(1) # Volume Sequence Number
-        pvd[128:132] = encode_both_16(2048) # Logical Block Size
-        pvd[132:140] = encode_both_32(2048) # Path Table Size
-        pvd[140:144] = struct.pack('<I', l_path_table_lba) # L Path Table
-        pvd[148:152] = struct.pack('>I', m_path_table_lba) # M Path Table
-        # Root directory record in PVD
-        root_dir_rec = make_dir_record(dirs[0]['lba'], dirs[0]['size'], 2, b'\x00')
-        pvd[156:156+len(root_dir_rec)] = root_dir_rec
-        pvd[190:318] = volume_name.upper().ljust(128).encode('ascii')[:128]
-        iso_f.write(pvd)
-
-        # 5.3 VDST (Sector 17)
-        vdst = bytearray(2048)
-        vdst[0] = 255 # Terminator
-        vdst[1:6] = b'CD001'
-        vdst[6] = 1
-        iso_f.write(vdst)
-
-        # 5.4 Path Tables (Sectores 18 y 19)
+        # Construir Path Tables primero para saber su tamaño exacto
         l_pt = bytearray()
         for idx, d in enumerate(dirs):
             d_name = d['name'].upper().encode('ascii') if d['name'] else b'\x00'
             rec = bytearray()
             rec.append(len(d_name))
-            rec.append(0) # Ext attribute length
+            rec.append(0)
             rec.extend(struct.pack('<I', d['lba']))
             rec.extend(struct.pack('<H', d['parent_idx']))
             rec.extend(d_name)
             if len(rec) % 2 != 0: rec.append(0)
             l_pt.extend(rec)
-        
-        l_pt_padded = bytearray(2048)
-        l_pt_padded[:len(l_pt)] = l_pt[:2048]
-        iso_f.write(l_pt_padded)
 
         m_pt = bytearray()
         for idx, d in enumerate(dirs):
@@ -228,28 +198,60 @@ def build_shared_extent_iso(source_tree_dir, output_iso_path, volume_name="MULTI
             if len(rec) % 2 != 0: rec.append(0)
             m_pt.extend(rec)
 
+        # 5.2 PVD (Sector 16)
+        pvd = bytearray(2048)
+        pvd[0] = 1
+        pvd[1:6] = b'CD001'
+        pvd[6] = 1
+        pvd[8:40] = b'SEGA SEGAKATANA                 '
+        pvd[40:72] = volume_name.upper().ljust(32).encode('ascii')[:32]
+        pvd[80:88] = encode_both_32(total_iso_sectors) # Volume Space Size
+        pvd[120:124] = encode_both_16(1)
+        pvd[124:128] = encode_both_16(1)
+        pvd[128:132] = encode_both_16(2048)
+        pvd[132:140] = encode_both_32(len(l_pt)) # Exact Path Table Size
+        pvd[140:144] = struct.pack('<I', l_path_table_lba)
+        pvd[148:152] = struct.pack('>I', m_path_table_lba)
+        # Root directory record in PVD
+        root_dir_rec = make_dir_record(dirs[0]['lba'], dirs[0]['size'], 2, b'\x00')
+        pvd[156:156+len(root_dir_rec)] = root_dir_rec
+        pvd[190:318] = volume_name.upper().ljust(128).encode('ascii')[:128]
+        iso_f.write(pvd)
+
+        # 5.3 VDST (Sector 17)
+        vdst = bytearray(2048)
+        vdst[0] = 255
+        vdst[1:6] = b'CD001'
+        vdst[6] = 1
+        iso_f.write(vdst)
+
+        # 5.4 Path Tables (Sectores 18 y 19)
+        l_pt_padded = bytearray(2048)
+        l_pt_padded[:len(l_pt)] = l_pt[:2048]
+        iso_f.write(l_pt_padded)
+
         m_pt_padded = bytearray(2048)
         m_pt_padded[:len(m_pt)] = m_pt[:2048]
         iso_f.write(m_pt_padded)
 
-        # 5.5 Escribir Tablas de Directorios (Sectores 20..)
+        # 5.5 Escribir Tablas de Directorios (Sectores 20..) con alineación estricta
         for d in dirs:
             dir_bytes = bytearray()
             # .
-            dir_bytes.extend(make_dir_record(d['lba'], d['size'], 2, b'\x00'))
+            append_dir_entry(dir_bytes, make_dir_record(d['lba'], d['size'], 2, b'\x00'))
             # ..
             parent_d = dirs[d['parent_idx'] - 1]
-            dir_bytes.extend(make_dir_record(parent_d['lba'], parent_d['size'], 2, b'\x01'))
+            append_dir_entry(dir_bytes, make_dir_record(parent_d['lba'], parent_d['size'], 2, b'\x01'))
             # Subdirs
             for s_name in d['subdirs']:
                 sub_rel = f"{d['rel']}/{s_name}".lstrip('/')
                 sub_d = dirs[dir_to_idx[sub_rel] - 1]
-                dir_bytes.extend(make_dir_record(sub_d['lba'], sub_d['size'], 2, s_name.upper().encode('ascii')))
+                append_dir_entry(dir_bytes, make_dir_record(sub_d['lba'], sub_d['size'], 2, s_name.upper().encode('ascii')))
             # Files
             for f_name, f_lba, f_size in d['file_records']:
                 fn = f_name.upper()
                 if ';' not in fn: fn += ';1'
-                dir_bytes.extend(make_dir_record(f_lba, f_size, 0, fn.encode('ascii', errors='ignore')))
+                append_dir_entry(dir_bytes, make_dir_record(f_lba, f_size, 0, fn.encode('ascii', errors='ignore')))
 
             # Pad directory to allocated sectors
             pad_len = d['size'] - len(dir_bytes)
@@ -257,13 +259,12 @@ def build_shared_extent_iso(source_tree_dir, output_iso_path, volume_name="MULTI
                 dir_bytes.extend(b'\x00' * pad_len)
             iso_f.write(dir_bytes[:d['size']])
 
-        # 5.6 Escribir Datos de Archivos Únicos (Sectores data_start_lba..)
+        # 5.6 Escribir Datos de Archivos Únicos (Sectores data_start_rel..)
         print("[*] Escribiendo contenido físico de archivos a la ISO...")
         for idx, (f_path, f_lba, f_size) in enumerate(unique_file_tasks):
             with open(f_path, 'rb') as in_f:
                 while chunk := in_f.read(1024 * 1024):
                     iso_f.write(chunk)
-            # Pad file to 2048-byte sector boundary
             rem = f_size % 2048
             if rem != 0:
                 iso_f.write(b'\x00' * (2048 - rem))
@@ -434,27 +435,98 @@ def build_multidisc_cdi(source_tree_dir, output_cdi_path, volume_name="MULTIDISC
     if not os.path.exists(ip_bin_path):
         ip_bin_path = os.path.join(ROOT_DIR, 'MVC2', 'IP.BIN')
 
-    # 1. Construir ISO con de-duplicación nativa en Python
-    build_shared_extent_iso(source_tree_dir, temp_iso, volume_name=volume_name, ip_bin_path=ip_bin_path, verbose=verbose)
+def package_audio_data_cdi(iso_path, output_cdi_path, volume_name="CAPCOM_FIGHT_PACK", base_lba=45000, verbose=True):
+    """
+    Empaqueta la ISO masterizada a LBA 45000 en un contenedor DiscJuggler CDI (Audio/Data v3.5)
+    100% idéntico a TDCFinal2.cdi, compatible con consolas Dreamcast y emuladores.
+    """
+    iso_size = os.path.getsize(iso_path)
+    iso_sectors = (iso_size + 2047) // 2048
 
-    # 2. Convertir a CDI con cdi4dc
-    print("\n[*] Generando contenedor CDI DiscJuggler (Data/Data) con cdi4dc...")
+    t1_sectors = 33600
+    t1_sec_size = 2352
+
+    t2_pregap = 70
+    t2_sectors = t2_pregap + iso_sectors
+    t2_sec_size = 2336
+
+    if verbose:
+        print("\n[*] Generando contenedor CDI DiscJuggler (Audio/Data a LBA 45000)...")
+        print(f"    - Pista 1: {t1_sectors:,} sectores Audio CDDA (LBA 0..33600)")
+        print(f"    - Pista 2: {t2_sectors:,} sectores Datos Mode 2 Form 1 (LBA {base_lba}..{base_lba + t2_sectors})")
+
+    with open(output_cdi_path, 'wb') as cdi_f:
+        # 1. Track 1 Header (Audio)
+        cdi_f.write(b'\x00\x00\x20\x00\x00\x00\x20\x00')
+        # Track 1 Audio Data (silencio PCM)
+        zero_mb = b'\x00' * (1024 * 1024)
+        bytes_left = t1_sectors * t1_sec_size
+        while bytes_left > 0:
+            to_write = min(len(zero_mb), bytes_left)
+            cdi_f.write(zero_mb[:to_write])
+            bytes_left -= to_write
+
+        # 2. Track 2 Header (Data)
+        cdi_f.write(b'\x00\x00\x00\x00\x00\x00\x00\x00')
+        # Track 2 Pregap (70 sectores)
+        cdi_f.write(b'\x00' * (t2_pregap * t2_sec_size))
+
+        # Track 2 ISO user sectors (convert 2048 -> 2336 Mode 2 Form 1)
+        with open(iso_path, 'rb') as in_iso:
+            while True:
+                sec = in_iso.read(2048)
+                if not sec: break
+                if len(sec) < 2048:
+                    sec += b'\x00' * (2048 - len(sec))
+                cdi_f.write(sec)
+                cdi_f.write(b'\x00' * 288)
+
+        # 3. Trailer DiscJuggler v3.5 basado en TDCFinal2
+        template_trailer = (
+            b'\x02\x00\x01\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\xff\xff\xff\xff\x00\x00\x01\x00\x00\x00\xff\xff\xff\xff\xbc\x12\n\x02'
+            b'7D:\\Documents and Settings\\toodles\\Desktop\\TDCFinal2.cdi\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80@~\x05\x00\x00\x00\x98\x00\x02\x00\x96\x00\x00\x00@\x83\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xd6\x83\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x04\x00\x00\x00\x00\xd6\x83\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\x01\x00\x00\x00\x80\x00\x00\x00\x02\x00\x00\x00\x10\x00\x00\x00D\xac\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\xff\xff\xff\xff\x00\x00\x01\x00\x00\x00\xff\xff\xff\xff\xbc\x12\n\x02'
+            b'7D:\\Documents and Settings\\toodles\\Desktop\\TDCFinal2.cdi\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80@~\x05\x00\x00\x00\x98\x00\x02\x00\x96\x00\x00\x00\x94\xcd\x04\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\xc8\xaf\x00\x00*\xce\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x04\x00\x00\x00\x00*\xce\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\x01\x00\x00\x00\x80\x00\x00\x00\x02\x00\x00\x00\x10\x00\x00\x00D\xac\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\xc8\xaf\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\xff\xff\xff\xff\x00\x00\x01\x00\x00\x00\xff\xff\xff\xff\xbc\x12\n\x02'
+            b'7D:\\Documents and Settings\\toodles\\Desktop\\TDCFinal2.cdi\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80@~\x05\x00\x00\x00\x98\x00\xf2}\x05\x00\tTDCFINAL2\x00\x01\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x06\x00\x00\x80\x17\x03\x00\x00'
+        )
+        tr = bytearray(template_trailer)
+
+        # Actualizar Track 2 sector count en offset 431
+        struct.pack_into('<I', tr, 431, t2_sectors)
+        # Actualizar Track 2 end LBA en offset 461
+        struct.pack_into('<I', tr, 461, base_lba + t2_sectors)
+
+        cdi_f.write(tr)
+
+    return True
+
+def build_multidisc_cdi(source_tree_dir, output_cdi_path, volume_name="MULTIDISC", verbose=True):
+    if not os.path.exists(source_tree_dir):
+        print(f"[-] Error: Directorio de origen no encontrado: {source_tree_dir}")
+        return False
+
+    os.makedirs(os.path.dirname(os.path.abspath(output_cdi_path)), exist_ok=True)
+    temp_iso = os.path.join(os.path.dirname(output_cdi_path), '_temp_multidisc.iso')
+
+    ip_bin_path = os.path.join(source_tree_dir, 'IP.BIN')
+    if not os.path.exists(ip_bin_path):
+        ip_bin_path = os.path.join(ROOT_DIR, 'Games', 'Frontend', 'IP.BIN')
+
+    # 1. Construir ISO con de-duplicación nativa en Python a base_lba = 45000
+    build_shared_extent_iso(source_tree_dir, temp_iso, volume_name=volume_name, ip_bin_path=ip_bin_path, base_lba=45000, verbose=verbose)
+
+    # 2. Convertir a CDI Audio/Data con Base LBA = 45000
     if os.path.exists(output_cdi_path):
         os.remove(output_cdi_path)
 
-    cmd_cdi = [CDI4DC_BIN, temp_iso, output_cdi_path, '-d']
-    res_cdi = subprocess.run(cmd_cdi, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-    
+    package_audio_data_cdi(temp_iso, output_cdi_path, volume_name=volume_name, base_lba=45000, verbose=verbose)
+
     if os.path.exists(temp_iso):
         os.remove(temp_iso)
 
-    if not os.path.exists(output_cdi_path):
-        print(f"[-] Error en cdi4dc:\n{res_cdi.stdout}")
-        return False
-
     cdi_size = os.path.getsize(output_cdi_path)
-    print(f"\n[✓] ¡Imagen CDI Multijuego generada con ÉXITO!")
+    print(f"\n[✓] ¡Imagen CDI Multijuego autobootable generada con ÉXITO!")
     print(f"    - Archivo: {output_cdi_path}")
+    print(f"    - Formato: Audio/Data a LBA 45000 (100% compatible Flycast y consolas reales)")
     print(f"    - Tamaño : {cdi_size:,} bytes ({cdi_size / (1024*1024):.2f} MB)")
     return True
 
@@ -551,10 +623,53 @@ def build_from_modules(output_cdi_path, volume_name="CAPCOM_FIGHT_PACK", games_d
 
     print("[+] Staging completado con hardlinks (0 MB adicionales).")
 
+    # Optimización global: fusionar archivos idénticos entre MvC2 Nene y Vanilla y otros juegos
+    deduplicate_staging_directory(staging_dir, verbose=verbose)
+
     # Build ISO and CDI
     build_multidisc_cdi(staging_dir, output_cdi_path, volume_name=volume_name, verbose=verbose)
     shutil.rmtree(staging_dir, ignore_errors=True)
     return True
+
+def deduplicate_staging_directory(staging_dir, verbose=True):
+    """
+    Escanea todo el árbol de staging y fusiona automáticamente mediante hardlinks
+    cualquier archivo con contenido idéntico entre juegos y carpetas (ej. MvC2 Nene vs Vanilla).
+    """
+    if verbose:
+        print("[*] Ejecutando optimizador global de de-duplicación de assets...")
+    
+    hash_map = {}
+    linked_count = 0
+    saved_bytes = 0
+
+    for root, dirs, files in os.walk(staging_dir):
+        for f in files:
+            fp = os.path.join(root, f)
+            st = os.stat(fp)
+            sz = st.st_size
+            if sz == 0: continue
+
+            with open(fp, 'rb') as in_f:
+                prefix = in_f.read(4096)
+
+            key = (sz, prefix)
+            if key in hash_map:
+                master = hash_map[key]
+                if os.stat(master).st_ino != st.st_ino:
+                    with open(master, 'rb') as m_f, open(fp, 'rb') as f_f:
+                        if m_f.read() == f_f.read():
+                            os.remove(fp)
+                            os.link(master, fp)
+                            linked_count += 1
+                            saved_bytes += sz
+            else:
+                hash_map[key] = fp
+
+    if verbose:
+        print(f"[+] Optimizador fusionó {linked_count:,} archivos idénticos entre juegos.")
+        print(f"[+] Espacio adicional recuperado: {saved_bytes / (1024*1024):.2f} MB!")
+    return linked_count, saved_bytes
 
 def main():
     parser = argparse.ArgumentParser(description='Gestor de compilaciones Multijuego y Multi-Soundtrack para Dreamcast')

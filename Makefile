@@ -105,10 +105,13 @@ cdi-dummy:
 	@echo "[*] Generando imagen CDI optimizada con 0DUMMY.DAT (hasta 650 MB)..."
 	$(TOOLS_LINUX)/build_cdi.sh "$(OUTPUT_CDI)" "650"
 
-## multidisc-custom: Construye el Capcom Fight Pack desde Games/ y MVC2/ (MvC2 Nene, MvC2 Vanilla, CvS2, SSF2X, SPF2X + Saves)
+## multidisc-custom: Inyecta MvC2 Nene Edition y menús personalizados en el multijuegos compatible
 multidisc-custom:
-	@echo "[*] Construyendo Capcom Fight Pack modular (MvC2 Nene, Vanilla, CvS2, SSF2X, SPF2X)..."
-	python3 $(TOOLS_LINUX)/multidisc_manager.py build-modular --output "$(OUTPUT_CDI)/mvc2_cvs2_st_pf_custom.cdi" --volume "CAPCOM_FIGHT_PACK"
+	@echo "[*] Inyectando MvC2 Nene Edition en compilación multijuego..."
+	python3 $(TOOLS_LINUX)/multidisc_injector.py "$(OUTPUT_CDI)/mvc2_nene_multidisc.cdi"
+
+## multidisc-inject: Alias de multidisc-custom
+multidisc-inject: multidisc-custom
 
 ## multidisc-extract: Extrae un CDI multijuego preservando hardlinks
 multidisc-extract:
