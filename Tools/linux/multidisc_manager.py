@@ -1215,18 +1215,18 @@ def build_capcom_4pack_cdi(output_cdi_path, volume_name="CAPCOM_FIGHT_PACK", ver
         '</td></tr>\r\n'
         '</table>\r\n'
         '<br><br>\r\n'
-        '<table border="2" bordercolor="#00FFCC" cellpadding="10" cellspacing="0" bgcolor="#001840" width="90%">\r\n'
+        '<table border="2" bordercolor="#00FFCC" cellpadding="8" cellspacing="0" bgcolor="#001840" width="90%">\r\n'
         '<tr>\r\n'
-        '<td align="left" width="70%"><font size="+1" color="#FFFF00"><b>1. Marvel vs Capcom 2 (Nene Edition)</b></font><br><font size="2" color="#AAAAAA">Custom Audio Tracks + Modded Sprites</font></td>\r\n'
-        '<td align="center" width="30%"><a href="x-avefront://---.dream/proc/launch/20"><font size="+2" color="#00FF00"><b>[ JUGAR ]</b></font></a></td>\r\n'
+        '<td align="left" width="85%"><a href="x-avefront://---.dream/proc/launch/20"><font size="+1" color="#FFFF00"><b>1. Marvel vs Capcom 2 (Nene)</b></font></a><br><font size="2" color="#AAAAAA">Custom Audio Tracks + Modded Sprites</font></td>\r\n'
+        '<td align="center" width="15%"><a href="x-avefront://---.dream/proc/launch/20"><font size="+3" color="#00FF88"><b>&gt;</b></font></a></td>\r\n'
         '</tr>\r\n'
         '<tr>\r\n'
-        '<td align="left"><font size="+1" color="#FFCC00"><b>2. Capcom vs SNK 2 (English v1.2)</b></font><br><font size="2" color="#AAAAAA">Millionaire Fighting 2001 | English Translation</font></td>\r\n'
-        '<td align="center"><a href="x-avefront://---.dream/proc/launch/3"><font size="+2" color="#00FF00"><b>[ JUGAR ]</b></font></a></td>\r\n'
+        '<td align="left"><a href="x-avefront://---.dream/proc/launch/3"><font size="+1" color="#FFCC00"><b>2. Capcom vs SNK 2 (English v1.2)</b></font></a><br><font size="2" color="#AAAAAA">Millionaire Fighting 2001 | English Translation</font></td>\r\n'
+        '<td align="center"><a href="x-avefront://---.dream/proc/launch/3"><font size="+3" color="#00FF88"><b>&gt;</b></font></a></td>\r\n'
         '</tr>\r\n'
         '<tr>\r\n'
-        '<td align="left"><font size="+1" color="#FF9933"><b>3. Super Street Fighter II X (ST)</b></font><br><font size="2" color="#AAAAAA">Grand Master Challenge</font></td>\r\n'
-        '<td align="center"><a href="x-avefront://---.dream/proc/launch/5"><font size="+2" color="#00FF00"><b>[ JUGAR ]</b></font></a></td>\r\n'
+        '<td align="left"><a href="x-avefront://---.dream/proc/launch/5"><font size="+1" color="#FF9933"><b>3. Super Street Fighter II X (ST)</b></font></a><br><font size="2" color="#AAAAAA">Grand Master Challenge</font></td>\r\n'
+        '<td align="center"><a href="x-avefront://---.dream/proc/launch/5"><font size="+3" color="#00FF88"><b>&gt;</b></font></a></td>\r\n'
         '</tr>\r\n'
         '</table>\r\n'
         '<br><br>\r\n'
@@ -1241,7 +1241,7 @@ def build_capcom_4pack_cdi(output_cdi_path, volume_name="CAPCOM_FIGHT_PACK", ver
             hf.write(menu_html.encode('latin1'))
 
     # 2. Agregar los 3 juegos
-    def stage_game_files(src_dir, dst_dir, custom_1st_read=None, patch_lba=None):
+    def stage_game_files(src_dir, dst_dir, custom_1st_read=None):
         os.makedirs(dst_dir, exist_ok=True)
         for item in os.listdir(src_dir):
             if item == '1ST_READ.BIN' and custom_1st_read:
@@ -1250,17 +1250,7 @@ def build_capcom_4pack_cdi(output_cdi_path, volume_name="CAPCOM_FIGHT_PACK", ver
             d_item = os.path.join(dst_dir, item)
             if os.path.isfile(s_item):
                 if not os.path.exists(d_item):
-                    if patch_lba and item in ('1ST_READ.BIN', '2_DP.BIN'):
-                        # Copiar y parchear LBA en staging sin tocar los archivos de origen
-                        old_val, new_val = patch_lba
-                        data = bytearray(open(s_item, 'rb').read())
-                        old_be = struct.pack('>I', old_val)
-                        new_be = struct.pack('>I', new_val)
-                        data = data.replace(old_be, new_be)
-                        with open(d_item, 'wb') as df:
-                            df.write(data)
-                    else:
-                        os.link(s_item, d_item)
+                    os.link(s_item, d_item)
         if custom_1st_read and os.path.exists(custom_1st_read):
             d_1st = os.path.join(dst_dir, '1ST_READ.BIN')
             if os.path.exists(d_1st):
@@ -1272,8 +1262,8 @@ def build_capcom_4pack_cdi(output_cdi_path, volume_name="CAPCOM_FIGHT_PACK", ver
     vanilla_1st_read = os.path.join(games_dir, "MVC2_Vanilla", "1ST_READ.BIN")
     # GAME20: MvC2 Nene (con assets custom de MVC2/ y ejecutable limpio de sistema de archivos sin tocar MVC2/1ST_READ.BIN)
     stage_game_files(os.path.join(ROOT_DIR, "MVC2"), os.path.join(staging_dir, "GAME20"), custom_1st_read=vanilla_1st_read)
-    # JAPCVS: CvS2 English v1.2 (con parche dinámico de Root Dir LBA 11730 -> 45021 en staging)
-    stage_game_files(os.path.join(games_dir, "CVS2"), os.path.join(staging_dir, "JAPCVS"), patch_lba=(11730, 45021))
+    # JAPCVS: CvS2 English v1.2 (desde GDI nativo)
+    stage_game_files(os.path.join(games_dir, "CVS2"), os.path.join(staging_dir, "JAPCVS"))
     # ST: SSF2X Super Turbo
     stage_game_files(os.path.join(games_dir, "SSF2X"), os.path.join(staging_dir, "ST"))
 
