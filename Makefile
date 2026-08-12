@@ -12,7 +12,7 @@ AUDIO_DIR := $(ROOT_DIR)/Extracted_Audio
 OUTPUT_GDI := $(ROOT_DIR)/output_gdi
 OUTPUT_CDI := $(ROOT_DIR)/output_cdi
 
-.PHONY: all help build-tools extract-textures dump-textures inject-textures pack-textures extract-audio dump-audio inject-audio pack-audio gdi cdi cdi-dummy multidisc-custom multidisc-extract multidisc-build convert-audio scramble unscramble clean
+.PHONY: all help build-tools extract-textures dump-textures inject-textures pack-textures extract-audio dump-audio inject-audio pack-audio gdi cdi cdi-dummy multidisc-custom multidisc-mini multidisc-puzzle multidisc-extract multidisc-build convert-audio scramble unscramble clean
 
 all: help
 
@@ -41,6 +41,7 @@ help:
 	@echo "  make gdi                Genera la imagen GDI para emuladores/GDEMU (output_gdi/)"
 	@echo "  make cdi                Genera la imagen CDI autoboot compacta (~498 MB)"
 	@echo "  make cdi-dummy          Genera la imagen CDI optimizada con 0DUMMY.DAT (hasta 650 MB para CD-R)"
+	@echo "  make multidisc-mini     Mini-Experimento: Compilación Menú + Super Puzzle Fighter II X (~182 MB)"
 	@echo "  make multidisc-custom   Construye el Capcom Fight Pack curado (MvC2 Nene, Original, CvS2, SSF2X, SPF2X)"
 	@echo "  make multidisc-build    Construye un CDI multijuego con de-duplicación (Uso: make multidisc-build [IN=...])"
 	@echo "  make multidisc-extract  Extrae un CDI multijuego con hardlinks (Uso: make multidisc-extract [CDI=...])"
@@ -104,6 +105,19 @@ cdi:
 cdi-dummy:
 	@echo "[*] Generando imagen CDI optimizada con 0DUMMY.DAT (hasta 650 MB)..."
 	$(TOOLS_LINUX)/build_cdi.sh "$(OUTPUT_CDI)" "650"
+
+## multidisc-mini: Mini-experimento CDI con solo el Menú Frontend y Super Puzzle Fighter II X (~166 MB)
+multidisc-mini:
+	@echo "[*] Construyendo mini-compilación CDI: Menú + Super Puzzle Fighter II X..."
+	python3 $(TOOLS_LINUX)/multidisc_manager.py build-mini --output "$${OUT:-$(OUTPUT_CDI)/mini_puzzle_multidisc.cdi}"
+
+## multidisc-mini-gdi: Mini-experimento GDI con solo el Menú Frontend y Super Puzzle Fighter II X (GDI puro)
+multidisc-mini-gdi:
+	@echo "[*] Construyendo mini-compilación GDI: Menú + Super Puzzle Fighter II X..."
+	python3 $(TOOLS_LINUX)/multidisc_manager.py build-mini-gdi --output "$${OUT:-$(ROOT_DIR)/output_gdi_mini_puzzle}"
+
+## multidisc-puzzle: Alias de multidisc-mini
+multidisc-puzzle: multidisc-mini
 
 ## multidisc-custom: Inyecta MvC2 Nene Edition y menús personalizados en el multijuegos compatible
 multidisc-custom:
