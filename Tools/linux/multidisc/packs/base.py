@@ -53,14 +53,20 @@ def prepare_frontend_base(staging_dir: str, frontend_src_dir: str = None, templa
 
     # Si se especificó una plantilla HTML dedicada, sobreescribir XDPDEX.HTML e INDEX.HTML
     if template_html_path and os.path.exists(template_html_path):
+        with open(template_html_path, 'rb') as tf:
+            content = tf.read().replace(b'\r\n', b'\n').replace(b'\n', b'\r\n')
         for fname in ['XDPDEX.HTML', 'INDEX.HTML', 'INDEX.HTM']:
-            shutil.copy2(template_html_path, os.path.join(dpwww_dst, fname))
+            with open(os.path.join(dpwww_dst, fname), 'wb') as out_h:
+                out_h.write(content)
     else:
-        # Asegurar que INDEX.HTML e INDEX.HTM sean copias exactas de XDPDEX.HTML
+        # Asegurar que INDEX.HTML e INDEX.HTM sean copias exactas de XDPDEX.HTML con CRLF
         master_xdpdex = os.path.join(dpwww_dst, 'XDPDEX.HTML')
         if os.path.exists(master_xdpdex):
-            for fname in ['INDEX.HTML', 'INDEX.HTM']:
-                shutil.copy2(master_xdpdex, os.path.join(dpwww_dst, fname))
+            with open(master_xdpdex, 'rb') as tf:
+                content = tf.read().replace(b'\r\n', b'\n').replace(b'\n', b'\r\n')
+            for fname in ['XDPDEX.HTML', 'INDEX.HTML', 'INDEX.HTM']:
+                with open(os.path.join(dpwww_dst, fname), 'wb') as out_h:
+                    out_h.write(content)
 
 def stage_game_files(src_dir: str, dst_dir: str, custom_1st_read: str = None):
     """

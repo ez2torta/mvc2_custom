@@ -1,5 +1,7 @@
 # Build & Output Directories
 .hist/
+76/
+[0-9]*/
 output_gdi*/
 output_cdi*/
 *_cdi/

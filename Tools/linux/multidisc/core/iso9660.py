@@ -1,332 +1,353 @@
 #!/usr/bin/env python3
 """
-iso9660.py - Generador canónico de sistemas de archivos ISO9660 con BFS y de-duplicación de sectores para Dreamcast.
+iso9660.py - Generador canónico de sistemas de archivos ISO9660 con BFS, Shared Extents y de-duplicación para Dreamcast.
 """
 
 import os
 import struct
-from collections import deque
 
-def build_iso9660_with_deduplication(root_dir: str, output_iso_path: str, volume_name: str = "MULTIDISC", base_lba: int = 45000, verbose: bool = True):
+def encode_both_16(val: int) -> bytes:
+    """Codifica un entero de 16 bits en formato Both-Endian (Little-Endian + Big-Endian)."""
+    return struct.pack('<H', val) + struct.pack('>H', val)
+
+def encode_both_32(val: int) -> bytes:
+    """Codifica un entero de 32 bits en formato Both-Endian (Little-Endian + Big-Endian)."""
+    return struct.pack('<I', val) + struct.pack('>I', val)
+
+def make_dir_record(lba: int, size: int, flags: int, name_bytes: bytes) -> bytes:
     """
-    Genera una imagen ISO9660 Nivel 1 canónica a LBA base (ej: 45000):
-    - Recorrido Breadth-First Search (BFS) estricto para la tabla de rutas (Path Table).
-    - Ordenamiento alfabético ASCII para directorios y archivos.
-    - Soporte completo de Hardlinks (Inodos compartidos) para de-duplicación física de sectores.
-    - Posicionamiento absoluto con seek para evitar desfases causados por archivos vacíos.
+    Construye un registro de directorio estándar ISO9660 con formato de fecha,
+    Both-Endian LBA/Size y alineación a byte par.
+    """
+    name_len = len(name_bytes)
+    rec_len = 33 + name_len
+    if rec_len % 2 != 0:
+        rec_len += 1 # Alinear a longitud de byte par
+
+    buf = bytearray(rec_len)
+    buf[0] = rec_len
+    buf[1] = 0 # Extended Attribute length
+    buf[2:10] = encode_both_32(lba)
+    buf[10:18] = encode_both_32(size)
+
+    # 7-byte date (year - 1900, month, day, hour, min, sec, offset)
+    buf[18] = 126 # Year 2026
+    buf[19] = 8   # Month
+    buf[20] = 11  # Day
+    buf[21] = 12  # Hour
+    buf[22] = 0   # Min
+    buf[23] = 0   # Sec
+    buf[24] = 0   # Timezone offset
+
+    buf[25] = flags
+    buf[26] = 0 # File unit size
+    buf[27] = 0 # Interleave gap
+    buf[28:32] = encode_both_16(1) # Volume sequence number
+    buf[32] = name_len
+    buf[33:33+name_len] = name_bytes
+    return bytes(buf)
+
+def build_iso9660_with_deduplication(source_tree_dir: str, output_iso_path: str, volume_name: str = "MULTIDISC", ip_bin_path: str = None, base_lba: int = 45000, verbose: bool = True):
+    """
+    Genera un archivo ISO9660 Nivel 1 canónico en Python puro con soporte completo para
+    Shared Extents (múltiples rutas apuntando al mismo LBA de inicio para hardlinks)
+    masterizado a base_lba (45000 para compilaciones multijuego Audio/Data).
     """
     if verbose:
         print("========================================================================")
         print(f"    Generador ISO9660 con De-duplicación de Sectores (Base LBA: {base_lba})")
         print("========================================================================")
-        print(f"[*] Directorio Origen: {root_dir}")
+        print(f"[*] Directorio Origen: {source_tree_dir}")
         print(f"[*] Nombre Volumen   : {volume_name}")
         print(f"[*] ISO Salida       : {output_iso_path}")
 
-    # 1. Descubrimiento de directorios en Amplitud (BFS)
-    # Cada entrada: (index_1based, path_absoluto, nombre_iso, parent_index_1based)
-    dir_entries = []
-    queue = deque([ (root_dir, "", 1) ])
-    
-    dirs_by_path = {}
-    dir_idx = 1
-    
+    # Si no se pasó ip_bin_path explícito, buscarlo en la raíz de source_tree_dir
+    if not ip_bin_path:
+        candidate_ip = os.path.join(source_tree_dir, 'IP.BIN')
+        if os.path.exists(candidate_ip):
+            ip_bin_path = candidate_ip
+
+    # 1. Indexar directorios en orden estricto de amplitud (Breadth-First Level-by-Level) conforme a la norma ISO9660
+    raw_dirs = {}
+    for root, dirnames, filenames in os.walk(source_tree_dir):
+        rel = os.path.relpath(root, source_tree_dir).replace('\\', '/')
+        if rel == '.': rel = ''
+        raw_dirs[rel] = {
+            'rel': rel,
+            'name': os.path.basename(rel) if rel else '',
+            'subdirs': sorted(dirnames),
+            'files': sorted(filenames),
+            'full_path': root
+        }
+
+    dirs = []
+    dir_to_idx = {}
+    queue = ['']
+
     while queue:
-        cur_p, iso_name, parent_id = queue.popleft()
-        dir_entries.append((dir_idx, cur_p, iso_name, parent_id))
-        dirs_by_path[cur_p] = dir_idx
-        my_idx = dir_idx
-        dir_idx += 1
-        
-        # Encontrar subdirectorios y ordenarlos alfabéticamente
-        subdirs = sorted([d for d in os.listdir(cur_p) if os.path.isdir(os.path.join(cur_p, d))])
-        for sub in subdirs:
-            queue.append((os.path.join(cur_p, sub), sub.upper(), my_idx))
+        curr_rel = queue.pop(0)
+        curr_info = raw_dirs[curr_rel]
+        dir_to_idx[curr_rel] = len(dirs) + 1
+
+        sorted_subdirs = sorted(curr_info['subdirs'], key=lambda s: s.upper().encode('ascii'))
+        for s in sorted_subdirs:
+            sub_rel = f"{curr_rel}/{s}".lstrip('/')
+            queue.append(sub_rel)
+
+        dirs.append({
+            'rel': curr_rel,
+            'name': curr_info['name'],
+            'parent_idx': 1,
+            'subdirs': sorted_subdirs,
+            'files': sorted(curr_info['files']),
+            'full_path': curr_info['full_path']
+        })
+
+    for d in dirs:
+        if d['rel']:
+            parent_rel = os.path.dirname(d['rel']).replace('\\', '/')
+            d['parent_idx'] = dir_to_idx[parent_rel]
 
     if verbose:
-        print(f"[+] Total directorios indexados (BFS ISO9660): {len(dir_entries)}")
+        print(f"[+] Total directorios indexados (BFS ISO9660): {len(dirs):,}")
 
-    # 2. Construcción de Path Table en memoria
-    # Type L (Little Endian) y Type M (Big Endian)
-    path_table_l = bytearray()
-    path_table_m = bytearray()
-    
-    for idx, p, name, parent in dir_entries:
-        nlen = len(name) if idx > 1 else 1
-        name_bytes = name.encode('ascii') if idx > 1 else b'\x00'
-        
-        entry_l = bytearray(8 + nlen)
-        entry_l[0] = nlen
-        entry_l[1] = 0 # Extended attribute record length
-        # LBA provisional (offset 2..6) se rellenará más adelante
-        entry_l[6:8] = parent.to_bytes(2, 'little')
-        entry_l[8:8+nlen] = name_bytes
-        if len(entry_l) % 2 != 0:
-            entry_l.append(0)
-            
-        entry_m = bytearray(8 + nlen)
-        entry_m[0] = nlen
-        entry_m[1] = 0
-        entry_m[6:8] = parent.to_bytes(2, 'big')
-        entry_m[8:8+nlen] = name_bytes
-        if len(entry_m) % 2 != 0:
-            entry_m.append(0)
-            
-        path_table_l.extend(entry_l)
-        path_table_m.extend(entry_m)
-        
-    path_table_size = len(path_table_l)
-    path_table_sectors = (path_table_size + 2047) // 2048
+    # 2. Construir plantilla de Path Table para calcular tamaño exacto en sectores
+    l_pt_dummy = bytearray()
+    for idx, d in enumerate(dirs):
+        d_name = d['name'].upper().encode('ascii') if d['name'] else b'\x00'
+        rec = bytearray()
+        rec.append(len(d_name))
+        rec.append(0)
+        rec.extend(struct.pack('<I', 0))
+        rec.extend(struct.pack('<H', d['parent_idx']))
+        rec.extend(d_name)
+        if len(rec) % 2 != 0: rec.append(0)
+        l_pt_dummy.extend(rec)
 
-    # 3. Planificador de Sectores LBA
-    # Sector 0..15: IP.BIN (32 KB = 16 sectores)
-    # Sector 16: PVD (Primary Volume Descriptor)
-    # Sector 17: Volume Descriptor Set Terminator
-    # Sector 18: Path Table L
-    # Sector 18 + PT_sec: Path Table M
-    # Sector 18 + 2*PT_sec: Root Directory y subdirectorios
-    
+    pt_size = len(l_pt_dummy)
+    pt_sectors = max(1, (pt_size + 2047) // 2048)
+
+    # 3. Layout canónico mkisofs / TDCFinal2:
+    # Sector 0..15: System Area (IP.BIN)
+    # Sector 16: PVD (LBA base_lba + 16)
+    # Sector 17: VDST (LBA base_lba + 17)
+    # Sector 18: Padding Zeros (LBA base_lba + 18)
+    # Sector 19: L-Path Table (LBA base_lba + 19)
+    # Sector 19 + pt_sectors: M-Path Table
+    # Sector 19 + 2*pt_sectors: Tablas de Directorios (Root y Subdirectorios)
     pvd_lba = base_lba + 16
-    term_lba = base_lba + 17
-    pt_l_lba = base_lba + 18
-    pt_m_lba = pt_l_lba + path_table_sectors
-    
-    cur_lba = pt_m_lba + path_table_sectors
-    
-    # Asignar LBAs a cada tabla de directorio
-    dir_lba_map = {}
-    dir_size_map = {}
-    
-    # Pre-calcular tamaños de directorio
-    dir_contents = {}
-    for idx, p, name, parent in dir_entries:
-        items = os.listdir(p)
-        files = sorted([f for f in items if os.path.isfile(os.path.join(p, f))])
-        subdirs = sorted([d for d in items if os.path.isdir(os.path.join(p, d))])
-        dir_contents[idx] = (subdirs, files)
-        
-        # Calcular tamaño del directorio
-        # '.' y '..' (34 + 34 = 68 bytes)
-        sz = 68
-        for d in subdirs:
-            sz += 33 + len(d) + (1 if len(d) % 2 == 0 else 0)
-        for f in files:
-            iso_f = f.upper()
-            if ';' not in iso_f: iso_f += ";1"
-            sz += 33 + len(iso_f) + (1 if len(iso_f) % 2 == 0 else 0)
-            
-        dir_sectors = (sz + 2047) // 2048
-        dir_lba_map[idx] = cur_lba
-        dir_size_map[idx] = dir_sectors * 2048
-        cur_lba += dir_sectors
+    vdst_lba = base_lba + 17
+    l_path_table_lba = base_lba + 19
+    m_path_table_lba = base_lba + 19 + pt_sectors
+    dir_start_rel = 19 + 2 * pt_sectors
+    current_dir_rel = dir_start_rel
 
-    root_dir_lba = dir_lba_map[1]
-    if verbose:
-        print(f"[+] Root directory LBA = {root_dir_lba} (Base LBA: {base_lba})")
+    def append_dir_entry(dir_sectors_buf, entry_bytes):
+        curr_offset = len(dir_sectors_buf) % 2048
+        rem = 2048 - curr_offset
+        if len(entry_bytes) > rem:
+            dir_sectors_buf.extend(b'\x00' * rem)
+        dir_sectors_buf.extend(entry_bytes)
 
-    # 4. Asignar LBAs a los archivos de datos (con de-duplicación por inodos)
-    inode_lba_map = {}
-    file_lba_map = {}
-    file_size_map = {}
-    
-    unique_files = 0
-    linked_files = 0
+    # 4. Asignar LBAs para directorios con alineación estricta a sectores de 2048 bytes
+    for d in dirs:
+        d['lba'] = base_lba + current_dir_rel
+        dir_buf = bytearray()
+        append_dir_entry(dir_buf, make_dir_record(0, 0, 2, b'\x00'))
+        append_dir_entry(dir_buf, make_dir_record(0, 0, 2, b'\x01'))
+        all_e = []
+        for s in d['subdirs']:
+            all_e.append((s.upper().encode('ascii'), 2))
+        for f in d['files']:
+            fn = f.upper()
+            if ';' not in fn: fn += ';1'
+            all_e.append((fn.encode('ascii', errors='ignore'), 0))
+        all_e.sort(key=lambda x: x[0])
+        for name_bytes, flags in all_e:
+            append_dir_entry(dir_buf, make_dir_record(0, 0, flags, name_bytes))
+
+        sectors_needed = max(1, (len(dir_buf) + 2047) // 2048)
+        d['size'] = sectors_needed * 2048
+        current_dir_rel += sectors_needed
+
+    data_start_rel = current_dir_rel
+    current_data_rel = data_start_rel
+
+    # 5. Asignar LBAs para archivos (con de-duplicación por inodo / hardlink)
+    inode_to_lba = {}
+    unique_file_tasks = []
+    unique_count = 0
+    shared_count = 0
     saved_bytes = 0
-    
-    for idx, p, name, parent in dir_entries:
-        subdirs, files = dir_contents[idx]
-        for f in files:
-            full_path = os.path.join(p, f)
-            stat = os.stat(full_path)
-            f_size = stat.st_size
-            file_size_map[full_path] = f_size
-            
-            # Archivo de 0 bytes no consume sectores físicos
-            if f_size == 0:
-                file_lba_map[full_path] = cur_lba
+
+    for d in dirs:
+        d['file_records'] = []
+        for f in d['files']:
+            full_p = os.path.join(d['full_path'], f)
+            st = os.stat(full_p)
+            size = st.st_size
+            key = (st.st_dev, st.st_ino)
+
+            if size == 0:
+                # Archivos de 0 bytes no consumen sectores físicos
+                file_lba = base_lba + current_data_rel
+                d['file_records'].append((f, file_lba, 0))
                 continue
-                
-            inode_key = (stat.st_dev, stat.st_ino)
-            if inode_key in inode_lba_map:
-                # ¡Hardlink detectado! Reutilizar LBA existente
-                file_lba_map[full_path] = inode_lba_map[inode_key]
-                linked_files += 1
-                saved_bytes += f_size
+
+            if key in inode_to_lba:
+                file_lba = inode_to_lba[key]
+                shared_count += 1
+                saved_bytes += size
             else:
-                file_lba_map[full_path] = cur_lba
-                inode_lba_map[inode_key] = cur_lba
-                unique_files += 1
-                sectors = (f_size + 2047) // 2048
-                cur_lba += sectors
+                file_lba = base_lba + current_data_rel
+                inode_to_lba[key] = file_lba
+                sec_count = (size + 2047) // 2048
+                current_data_rel += sec_count
+                unique_file_tasks.append((full_p, file_lba, size))
+                unique_count += 1
 
-    total_iso_sectors = cur_lba - base_lba
-    total_iso_bytes = total_iso_sectors * 2048
-    
+            d['file_records'].append((f, file_lba, size))
+
+    total_iso_sectors = current_data_rel
     if verbose:
-        print(f"[+] Archivos únicos a escribir : {unique_files:,}")
-        print(f"[+] Archivos enlazados (Hardlinks): {linked_files:,} (Ahorro: {saved_bytes/(1024*1024):.2f} MB!)")
-        print(f"[+] Espacio final de la ISO    : {total_iso_bytes:,} bytes ({total_iso_bytes/(1024*1024):.2f} MB)")
+        print(f"[+] Root directory LBA = {dirs[0]['lba']} (Base LBA: {base_lba})")
+        print(f"[+] Archivos únicos a escribir : {unique_count:,}")
+        print(f"[+] Archivos enlazados (Hardlinks): {shared_count:,} (Ahorro: {saved_bytes / (1024*1024):.2f} MB!)")
+        print(f"[+] Espacio final de la ISO    : {total_iso_sectors * 2048:,} bytes ({total_iso_sectors * 2048 / (1024*1024):.2f} MB)")
 
-    # 5. Escribir imagen ISO9660 física
+    # 6. Escribir archivo ISO
     os.makedirs(os.path.dirname(os.path.abspath(output_iso_path)), exist_ok=True)
     with open(output_iso_path, 'wb') as iso_f:
-        # Pre-reservar tamaño completo
-        iso_f.truncate(total_iso_bytes)
-        
-        # Inyectar IP.BIN en los primeros 16 sectores (32 KB)
-        ip_bin_path = os.path.join(root_dir, 'IP.BIN')
-        if os.path.exists(ip_bin_path):
-            with open(ip_bin_path, 'rb') as ip_file:
-                ip_data = ip_file.read(32768)
-                iso_f.seek(0)
-                iso_f.write(ip_data)
-                
-        # Primary Volume Descriptor (PVD) a Sector 16
+        # 6.1 System Area (Sectores 0..15: IP.BIN)
+        ip_data = bytearray(32768)
+        if ip_bin_path and os.path.exists(ip_bin_path):
+            with open(ip_bin_path, 'rb') as ip_f:
+                raw_ip = ip_f.read(32768)
+                ip_data[:len(raw_ip)] = raw_ip
+        iso_f.write(ip_data)
+
+        # Construir Path Tables definitivas con los LBAs reales asignados
+        l_pt = bytearray()
+        for idx, d in enumerate(dirs):
+            d_name = d['name'].upper().encode('ascii') if d['name'] else b'\x00'
+            rec = bytearray()
+            rec.append(len(d_name))
+            rec.append(0)
+            rec.extend(struct.pack('<I', d['lba']))
+            rec.extend(struct.pack('<H', d['parent_idx']))
+            rec.extend(d_name)
+            if len(rec) % 2 != 0: rec.append(0)
+            l_pt.extend(rec)
+
+        m_pt = bytearray()
+        for idx, d in enumerate(dirs):
+            d_name = d['name'].upper().encode('ascii') if d['name'] else b'\x00'
+            rec = bytearray()
+            rec.append(len(d_name))
+            rec.append(0)
+            rec.extend(struct.pack('>I', d['lba']))
+            rec.extend(struct.pack('>H', d['parent_idx']))
+            rec.extend(d_name)
+            if len(rec) % 2 != 0: rec.append(0)
+            m_pt.extend(rec)
+
+        # 6.2 PVD (Sector 16)
         pvd = bytearray(2048)
-        pvd[0] = 1 # Type: PVD
+        pvd[0] = 1
         pvd[1:6] = b'CD001'
-        pvd[6] = 1 # Version
-        pvd[8:40] = b'SEGA SEGAKATANA '.ljust(32, b' ') # System ID
-        pvd[40:72] = volume_name.encode('ascii').ljust(32, b' ') # Volume ID
-        pvd[80:88] = struct.pack('<I', total_iso_sectors) + struct.pack('>I', total_iso_sectors)
-        pvd[120:124] = struct.pack('<H', 1) + struct.pack('>H', 1) # Volume set size
-        pvd[124:128] = struct.pack('<H', 1) + struct.pack('>H', 1) # Volume sequence number
-        pvd[128:132] = struct.pack('<H', 2048) + struct.pack('>H', 2048) # Logical block size
-        pvd[132:140] = struct.pack('<I', path_table_size) + struct.pack('>I', path_table_size)
-        pvd[140:144] = struct.pack('<I', pt_l_lba) # Type L Path Table LBA
-        pvd[148:152] = struct.pack('>I', pt_m_lba) # Type M Path Table LBA
-        
-        # Root directory record en PVD (34 bytes)
-        root_rec = bytearray(34)
-        root_rec[0] = 34
-        root_rec[2:10] = struct.pack('<I', root_dir_lba) + struct.pack('>I', root_dir_lba)
-        root_rec[10:18] = struct.pack('<I', dir_size_map[1]) + struct.pack('>I', dir_size_map[1])
-        root_rec[25] = 2 # Directory flag
-        root_rec[28:32] = struct.pack('<H', 1) + struct.pack('>H', 1)
-        root_rec[32] = 1
-        root_rec[33] = 0
-        pvd[156:190] = root_rec
-        
-        pvd[190:318] = volume_name.encode('ascii').ljust(128, b' ') # Volume Set ID
-        pvd[318:446] = b'SEGA ENTERPRISES'.ljust(128, b' ') # Publisher ID
-        pvd[446:574] = b'SEGA ENTERPRISES'.ljust(128, b' ') # Data Preparer ID
-        pvd[574:702] = b'ANTIGRAVITY MULTIDISC ENGINE'.ljust(128, b' ') # Application ID
-        
-        iso_f.seek((pvd_lba - base_lba) * 2048)
+        pvd[6] = 1
+        pvd[8:40] = b'LINUX                           '
+        pvd[40:72] = volume_name.upper().ljust(32).encode('ascii')[:32]
+        pvd[80:88] = encode_both_32(total_iso_sectors) # Volume Space Size
+        pvd[120:124] = encode_both_16(1)
+        pvd[124:128] = encode_both_16(1)
+        pvd[128:132] = encode_both_16(2048)
+        pvd[132:140] = encode_both_32(len(l_pt)) # Exact Path Table Size
+        pvd[140:144] = struct.pack('<I', l_path_table_lba)
+        pvd[148:152] = struct.pack('>I', m_path_table_lba)
+        # Root directory record in PVD
+        root_dir_rec = make_dir_record(dirs[0]['lba'], dirs[0]['size'], 2, b'\x00')
+        pvd[156:156+len(root_dir_rec)] = root_dir_rec
+        pvd[190:318] = b' ' * 128
+        pvd[318:446] = b' ' * 128
+        pvd[446:574] = b' ' * 128
+        pvd[574:702] = b'MKISOFS ISO 9660/HFS FILESYSTEM BUILDER & CDRECORD CD-R/DVD CREATOR (C) 1993 E.YOUNGDALE (C) 1997 J.PEARSON/J.SCHILLING'.ljust(128)[:128]
         iso_f.write(pvd)
-        
-        # Volume Descriptor Set Terminator a Sector 17
-        term = bytearray(2048)
-        term[0] = 255
-        term[1:6] = b'CD001'
-        term[6] = 1
-        iso_f.seek((term_lba - base_lba) * 2048)
-        iso_f.write(term)
-        
-        # Actualizar LBAs en las Path Tables
-        pos_l = 0
-        pos_m = 0
-        for idx, p, name, parent in dir_entries:
-            nlen = len(name) if idx > 1 else 1
-            d_lba = dir_lba_map[idx]
-            path_table_l[pos_l+2:pos_l+6] = struct.pack('<I', d_lba)
-            path_table_m[pos_m+2:pos_m+6] = struct.pack('>I', d_lba)
-            entry_len = 8 + nlen + (1 if nlen % 2 != 0 else 0)
-            pos_l += entry_len
-            pos_m += entry_len
-            
-        iso_f.seek((pt_l_lba - base_lba) * 2048)
-        iso_f.write(path_table_l)
-        
-        iso_f.seek((pt_m_lba - base_lba) * 2048)
-        iso_f.write(path_table_m)
-        
-        # Escribir registros de directorio
-        def make_dir_record(lba, size, is_dir, name_str, is_current_dir=False, is_parent_dir=False):
-            if is_current_dir:
-                n_bytes = b'\x00'
-            elif is_parent_dir:
-                n_bytes = b'\x01'
-            else:
-                n_bytes = name_str.encode('ascii')
-                
-            nlen = len(n_bytes)
-            rec_len = 33 + nlen
-            if rec_len % 2 != 0:
-                rec_len += 1
-                
-            rec = bytearray(rec_len)
-            rec[0] = rec_len
-            rec[2:10] = struct.pack('<I', lba) + struct.pack('>I', lba)
-            rec[10:18] = struct.pack('<I', size) + struct.pack('>I', size)
-            rec[25] = 2 if is_dir else 0
-            rec[28:32] = struct.pack('<H', 1) + struct.pack('>H', 1)
-            rec[32] = nlen
-            rec[33:33+nlen] = n_bytes
-            return bytes(rec)
 
-        for idx, p, name, parent in dir_entries:
-            subdirs, files = dir_contents[idx]
-            d_lba = dir_lba_map[idx]
-            p_lba = dir_lba_map[parent]
-            
-            d_block = bytearray()
-            # '.' (Current Dir)
-            d_block.extend(make_dir_record(d_lba, dir_size_map[idx], True, "", is_current_dir=True))
-            # '..' (Parent Dir)
-            d_block.extend(make_dir_record(p_lba, dir_size_map[parent], True, "", is_parent_dir=True))
-            
-            # Subdirectorios ordenados
-            for sub in subdirs:
-                sub_path = os.path.join(p, sub)
-                sub_idx = dirs_by_path[sub_path]
-                d_block.extend(make_dir_record(dir_lba_map[sub_idx], dir_size_map[sub_idx], True, sub.upper()))
-                
-            # Archivos ordenados
-            for f in files:
-                full_path = os.path.join(p, f)
-                f_lba = file_lba_map[full_path]
-                f_sz = file_size_map[full_path]
-                iso_f_name = f.upper()
-                if ';' not in iso_f_name: iso_f_name += ";1"
-                d_block.extend(make_dir_record(f_lba, f_sz, False, iso_f_name))
-                
-            iso_f.seek((d_lba - base_lba) * 2048)
-            iso_f.write(d_block)
+        # 6.3 VDST (Sector 17)
+        vdst = bytearray(2048)
+        vdst[0] = 255
+        vdst[1:6] = b'CD001'
+        vdst[6] = 1
+        iso_f.write(vdst)
 
-        # Escribir contenido físico de los archivos
+        # 6.3.1 Sector 18: Padding Zeros (Canónico mkisofs / TDCFinal2)
+        iso_f.write(b'\x00' * 2048)
+
+        # 6.4 Path Tables (Sectores 19..)
+        l_pt_padded = bytearray(pt_sectors * 2048)
+        l_pt_padded[:len(l_pt)] = l_pt
+        iso_f.write(l_pt_padded)
+
+        m_pt_padded = bytearray(pt_sectors * 2048)
+        m_pt_padded[:len(m_pt)] = m_pt
+        iso_f.write(m_pt_padded)
+
+        # 6.5 Escribir Tablas de Directorios con ordenamiento ISO9660 estricto
+        for d in dirs:
+            iso_f.seek((d['lba'] - base_lba) * 2048)
+            dir_bytes = bytearray()
+            # . (Current dir)
+            append_dir_entry(dir_bytes, make_dir_record(d['lba'], d['size'], 2, b'\x00'))
+            # .. (Parent dir)
+            parent_d = dirs[d['parent_idx'] - 1]
+            append_dir_entry(dir_bytes, make_dir_record(parent_d['lba'], parent_d['size'], 2, b'\x01'))
+
+            # Combinar subdirectorios y archivos en una sola lista y ordenar alfabéticamente por nombre ISO
+            all_entries = []
+            for s_name in d['subdirs']:
+                sub_rel = f"{d['rel']}/{s_name}".lstrip('/')
+                sub_d = dirs[dir_to_idx[sub_rel] - 1]
+                iso_name = s_name.upper().encode('ascii')
+                all_entries.append((iso_name, sub_d['lba'], sub_d['size'], 2))
+
+            for f_name, f_lba, f_size in d['file_records']:
+                fn = f_name.upper()
+                if ';' not in fn: fn += ';1'
+                iso_name = fn.encode('ascii', errors='ignore')
+                all_entries.append((iso_name, f_lba, f_size, 0))
+
+            # Ordenamiento estricto ISO9660 por los bytes del nombre
+            all_entries.sort(key=lambda x: x[0])
+
+            for iso_name, ext_lba, ext_size, flags in all_entries:
+                append_dir_entry(dir_bytes, make_dir_record(ext_lba, ext_size, flags, iso_name))
+
+            # Rellenar con ceros hasta el tamaño del sector
+            pad_len = d['size'] - len(dir_bytes)
+            if pad_len > 0:
+                dir_bytes.extend(b'\x00' * pad_len)
+
+            iso_f.write(dir_bytes[:d['size']])
+
+        # 6.6 Escribir Datos de Archivos Únicos con seek exacto por LBA
         if verbose:
             print("[*] Escribiendo contenido físico de archivos a la ISO...")
-        
-        written_inodes = set()
-        file_count = 0
-        
-        for full_path, f_lba in file_lba_map.items():
-            f_size = file_size_map[full_path]
-            if f_size == 0:
-                continue
-                
-            stat = os.stat(full_path)
-            inode_key = (stat.st_dev, stat.st_ino)
-            if inode_key in written_inodes:
-                continue
-            written_inodes.add(inode_key)
-            
-            # Posicionamiento absoluto exacto por sector LBA
+        for idx, (f_path, f_lba, f_size) in enumerate(unique_file_tasks):
+            if f_size == 0: continue
             iso_f.seek((f_lba - base_lba) * 2048)
-            with open(full_path, 'rb') as in_f:
-                while True:
-                    chunk = in_f.read(65536)
-                    if not chunk: break
+            with open(f_path, 'rb') as in_f:
+                while chunk := in_f.read(1024 * 1024):
                     iso_f.write(chunk)
-                    
-            file_count += 1
-            if verbose and file_count % 500 == 0:
-                print(f"    [{file_count:4d}/{unique_files}] Archivos físicos escritos...")
+            rem = f_size % 2048
+            if rem != 0:
+                iso_f.write(b'\x00' * (2048 - rem))
+
+            if verbose and (idx + 1) % 500 == 0:
+                print(f"    [{idx+1:4}/{len(unique_file_tasks)}] Archivos físicos escritos...")
 
     if verbose:
         print(f"\n[✓] ¡ISO generada con ÉXITO!")
         print(f"    - Archivo: {output_iso_path}")
-        print(f"    - Tamaño : {os.path.getsize(output_iso_path):,} bytes ({os.path.getsize(output_iso_path)/(1024*1024):.2f} MB)")
-        
+        print(f"    - Tamaño : {os.path.getsize(output_iso_path):,} bytes ({os.path.getsize(output_iso_path) / (1024*1024):.2f} MB)")
     return True
