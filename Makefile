@@ -37,14 +37,17 @@ help:
 	@echo "  make convert-audio      Convierte un audio individual a CRI ADX"
 	@echo "                          Uso: make convert-audio INPUT=tema.mp3 OUTPUT=MVC2/ADX_S000.BIN"
 	@echo ""
-	@echo "  --- COMPILACIÓN DE IMÁGENES ---"
+	@echo "  --- COMPILACIÓN STANDALONE (MvC2 Nene Edition) ---"
 	@echo "  make gdi                Genera la imagen GDI para emuladores/GDEMU (output_gdi/)"
 	@echo "  make cdi                Genera la imagen CDI autoboot compacta (~498 MB)"
 	@echo "  make cdi-dummy          Genera la imagen CDI optimizada con 0DUMMY.DAT (hasta 650 MB para CD-R)"
-	@echo "  make multidisc-mini     Mini-Experimento: Compilación Menú + Super Puzzle Fighter II X (~182 MB)"
-	@echo "  make multidisc-custom   Construye el Capcom Fight Pack curado (MvC2 Nene, Original, CvS2, SSF2X, SPF2X)"
-	@echo "  make multidisc-build    Construye un CDI multijuego con de-duplicación (Uso: make multidisc-build [IN=...])"
-	@echo "  make multidisc-extract  Extrae un CDI multijuego con hardlinks (Uso: make multidisc-extract [CDI=...])"
+	@echo ""
+	@echo "  --- COMPILACIÓN MULTIJUEGOS (Capcom Fight Pack & Tests) ---"
+	@echo "  make multidisc          Genera el Capcom Fight Pack 3-en-1 (MvC2 Nene + CvS2 English + ST) en CD-R 700MB"
+	@echo "  make multidisc-mini     Mini-Test: Compilación Menú + Super Puzzle Fighter II X (~166 MB)"
+	@echo "  make multidisc-holamundo Mini-Test: Solo Browser Dricas + Hola Mundo Dreamcast (~78 MB)"
+	@echo "  make multidisc-build    Construye un CDI multijuego desde carpeta arbitraria (Uso: make multidisc-build IN=...)"
+	@echo "  make multidisc-extract  Extrae un CDI multijuego con hardlinks (Uso: make multidisc-extract CDI=...)"
 	@echo ""
 	@echo "  --- HERRAMIENTAS SH-4 ---"
 	@echo "  make scramble           Scramblea un binario SH-4 (Uso: make scramble INPUT=... OUTPUT=...)"
@@ -106,6 +109,15 @@ cdi-dummy:
 	@echo "[*] Generando imagen CDI optimizada con 0DUMMY.DAT (hasta 650 MB)..."
 	$(TOOLS_LINUX)/build_cdi.sh "$(OUTPUT_CDI)" "650"
 
+## multidisc: Genera el Capcom Fight Pack (3 juegos: MvC2 Nene + CvS2 English + Super Turbo)
+multidisc:
+	@echo "[*] Generando Capcom Fight Pack 3-en-1 (CD-R 700 MB)..."
+	python3 $(TOOLS_LINUX)/multidisc_manager.py build-modular --output "$${OUT:-$(OUTPUT_CDI)/capcom_fight_pack.cdi}" --volume "CAPCOM_FIGHT_PACK"
+
+multidisc-fightpack: multidisc
+multidisc-modular: multidisc
+multidisc-pack: multidisc
+
 ## multidisc-mini: Mini-experimento CDI con solo el Menú Frontend y Super Puzzle Fighter II X (~166 MB)
 multidisc-mini:
 	@echo "[*] Construyendo mini-compilación CDI: Menú + Super Puzzle Fighter II X..."
@@ -120,25 +132,6 @@ multidisc-mini-gdi:
 multidisc-holamundo:
 	@echo "[*] Construyendo mini-mini-compilación CDI: Solo Browser Dricas + Hola Mundo..."
 	python3 $(TOOLS_LINUX)/multidisc_manager.py build-holamundo --output "$${OUT:-$(OUTPUT_CDI)/hola_mundo_dreamcast.cdi}"
-
-## multidisc-puzzle: Alias de multidisc-mini
-multidisc-puzzle: multidisc-mini
-
-## multidisc-custom: Inyecta MvC2 Nene Edition y menús personalizados en el multijuegos compatible
-multidisc-custom:
-	@echo "[*] Inyectando MvC2 Nene Edition en compilación multijuego..."
-	python3 $(TOOLS_LINUX)/multidisc_injector.py "$(OUTPUT_CDI)/mvc2_nene_multidisc.cdi"
-
-## multidisc-inject: Alias de multidisc-custom
-multidisc-inject: multidisc-custom
-
-## multidisc-modular: Ensambla y compila el Capcom Fight Pack completo (5 juegos) desde Games/ y MVC2/
-multidisc-modular:
-	@echo "[*] Construyendo compilación multijuego completa (5 juegos) con ISO pre-masterizada y CDI..."
-	python3 $(TOOLS_LINUX)/multidisc_manager.py build-modular --output "$${OUT:-$(OUTPUT_CDI)/capcom_fight_pack.cdi}" --volume "CAPCOM_FIGHT_PACK"
-
-## multidisc-pack: Alias de multidisc-modular
-multidisc-pack: multidisc-modular
 
 ## multidisc-extract: Extrae un CDI multijuego preservando hardlinks
 multidisc-extract:

@@ -28,6 +28,7 @@ Games/Frontend/README.TXT
 *.bin.bak
 
 # Temporary & Build Files
+ADX_canciones
 *.tmp
 *.bak
 *.log
