@@ -1,6 +1,10 @@
 .hist/
 output_gdi/
 output_cdi/
+MultiGames/
+TDCFinal2/
+mvc2 fight kingdom/
+MVC2_MODS_*/
 Extracted_Audio/WAV/
 Extracted_Audio/MP3/
 *.tmp

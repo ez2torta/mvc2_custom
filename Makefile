@@ -12,7 +12,7 @@ AUDIO_DIR := $(ROOT_DIR)/Extracted_Audio
 OUTPUT_GDI := $(ROOT_DIR)/output_gdi
 OUTPUT_CDI := $(ROOT_DIR)/output_cdi
 
-.PHONY: all help build-tools extract-textures dump-textures inject-textures pack-textures extract-audio dump-audio inject-audio pack-audio gdi cdi cdi-dummy convert-audio scramble unscramble clean
+.PHONY: all help build-tools extract-textures dump-textures inject-textures pack-textures extract-audio dump-audio inject-audio pack-audio gdi cdi cdi-dummy multidisc-custom multidisc-extract multidisc-build convert-audio scramble unscramble clean
 
 all: help
 
@@ -41,6 +41,9 @@ help:
 	@echo "  make gdi                Genera la imagen GDI para emuladores/GDEMU (output_gdi/)"
 	@echo "  make cdi                Genera la imagen CDI autoboot compacta (~498 MB)"
 	@echo "  make cdi-dummy          Genera la imagen CDI optimizada con 0DUMMY.DAT (hasta 650 MB para CD-R)"
+	@echo "  make multidisc-custom   Construye el Capcom Fight Pack curado (MvC2 Nene, Original, CvS2, SSF2X, SPF2X)"
+	@echo "  make multidisc-build    Construye un CDI multijuego con de-duplicación (Uso: make multidisc-build [IN=...])"
+	@echo "  make multidisc-extract  Extrae un CDI multijuego con hardlinks (Uso: make multidisc-extract [CDI=...])"
 	@echo ""
 	@echo "  --- HERRAMIENTAS SH-4 ---"
 	@echo "  make scramble           Scramblea un binario SH-4 (Uso: make scramble INPUT=... OUTPUT=...)"
@@ -101,6 +104,21 @@ cdi:
 cdi-dummy:
 	@echo "[*] Generando imagen CDI optimizada con 0DUMMY.DAT (hasta 650 MB)..."
 	$(TOOLS_LINUX)/build_cdi.sh "$(OUTPUT_CDI)" "650"
+
+## multidisc-custom: Construye el Capcom Fight Pack desde Games/ y MVC2/ (MvC2 Nene, MvC2 Vanilla, CvS2, SSF2X, SPF2X + Saves)
+multidisc-custom:
+	@echo "[*] Construyendo Capcom Fight Pack modular (MvC2 Nene, Vanilla, CvS2, SSF2X, SPF2X)..."
+	python3 $(TOOLS_LINUX)/multidisc_manager.py build-modular --output "$(OUTPUT_CDI)/mvc2_cvs2_st_pf_custom.cdi" --volume "CAPCOM_FIGHT_PACK"
+
+## multidisc-extract: Extrae un CDI multijuego preservando hardlinks
+multidisc-extract:
+	@echo "[*] Extrayendo CDI multijuego con hardlinks..."
+	python3 $(TOOLS_LINUX)/multidisc_manager.py extract --input "$${CDI:-$(ROOT_DIR)/TDCFinal2/disc.cdi}" --output "$${OUT:-$(ROOT_DIR)/MultiGames/TDC_Extracted}"
+
+## multidisc-build: Construye un CDI multijuego con de-duplicación de sectores
+multidisc-build:
+	@echo "[*] Construyendo CDI multijuego / multi-soundtrack..."
+	python3 $(TOOLS_LINUX)/multidisc_manager.py build --input "$${IN:-$(ROOT_DIR)/MultiGames/TDC_Extracted}" --output "$${OUT:-$(OUTPUT_CDI)/multidisc_custom.cdi}" --volume "$${VOL:-MULTIDISC}"
 
 ## convert-audio: Convierte audio individual a ADX
 convert-audio:
