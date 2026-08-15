@@ -1,0 +1,3 @@
+lo último que me faltaría sería ver como poder aplicarle unlocks o algo así, considerando lo que hay en el mvc2 la estructura de los unlocks debe ser parecida. si necesitas algun archivo adicional pídemelo antes.  deje varios VMS y VMI dentro de la raiz del proyecto para que analices que datos son los que se escriben. ahora quizás me faltó ver que partes son las que estaban originalmente escritas (cuando no hay unlocks), si los deseas los puedo conseguir
+
+  dejame la técnica/metodología en markdown antes de ejecutar. gracias

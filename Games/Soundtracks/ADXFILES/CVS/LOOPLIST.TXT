@@ -1,0 +1,38 @@
+ADX_CONT.BIN:1820:707420:Continue
+ADX_DM01.BIN:1820:660700:Boss story leadin
+ADX_DM02.BIN:1820:660700:Superboss story leadin
+ADX_END1.BIN:1820:2510620:Congrats ending
+ADX_END2.BIN:1820:1649116:Boss ending
+ADX_FNAL.BIN:NO:NO:Final tournament leading
+ADX_GRV.BIN:1820:1256188:Groove select
+ADX_HER1.BIN:NO:NO:Here comes a new challenger
+ADX_HER2.BIN:NO:NO:interrupted the tournament
+ADX_MENU.BIN:1820:738076:Main Menu
+ADX_NAME.BIN:1820:707420:Enter your name
+ADX_NEWS.BIN:1820:1778140:Newcast theme
+ADX_NOIS.BIN:NO:NO:Static
+ADX_OPEN.BIN:NO:NO:Main Attract
+ADX_OVER.BIN:NO:NO:Game Over
+ADX_RANK.BIN:1820:1294492:Ranking Display
+ADX_RATO.BIN:1820:1256188:Ratio Entry
+ADX_ROLL.BIN:NO:NO:Credit Roll
+ADX_SEL1.BIN:1820:1883420:Character Select 1
+ADX_SEL2.BIN:1820:1883420:Character Select 2
+ADX_ST00.BIN:1820:3388700:Stage - Aormori
+ADX_ST01.BIN:1820:3765020:Stage - Shanghai?
+ADX_ST02.BIN:1820:3177020:Stage - Nairobi
+ADX_ST03.BIN:1820:3488316:Stage - Kinderdijk
+ADX_ST04.BIN:1820:3757404:Stage - London
+ADX_ST05.BIN:1820:3339836:Stage - Barentsburg
+ADX_ST06.BIN:1820:2711324:Stage - New York
+ADX_ST07.BIN:1820:2510620:Stage - Osake 1 (Tournament)
+ADX_ST08.BIN:1820:2295036:Stage - Osaka 2 (Rooftop)
+ADX_ST09.BIN:1820:4078588:Stage - Osaka 3 (Shin Akuma)
+ADX_ST0A.BIN:1820:3529820:Stage - Osaka 4 (God Rugal)
+ADX_ST0B.BIN:1820:2647836:Stage - Osaka 5 (Training)
+ADX_VS.BIN:1820:1294492:Versus Screen
+ADX_WIN1.BIN:1820:1256188:Win 1 (Luck helped this...)
+ADX_WIN2.BIN:1820:1256188:Win 2 (See the intensity...)
+ADX_WIN3.BIN:1820:1256188:Win 3 (Way too strong...)
+ADX_WIN4.BIN:1820:1256188:Win 4 (FinalRound)
+ADX_WIN5.BIN:1820:1256188:Win 5 (No Announcer)

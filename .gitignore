@@ -1,0 +1,57 @@
+# Build & Output Directories
+.hist/
+76/
+[0-9]*/
+output_gdi*/
+output_cdi*/
+output_mp3*/
+*_cdi/
+*_gdi/
+Capcom vs. SNK 2*
+MultiGames/
+TDCFinal2/
+mvc2 fight kingdom/
+MVC2_MODS_*/
+_staging*
+cdi_examples/
+cvs_japan_extracted/
+
+# Extracted Media & Audio
+Extracted_Audio/WAV/
+Extracted_Audio/MP3/
+Games/Frontend/ADXFILES/
+Games/Frontend/FANDISK/
+Games/Frontend/AR/
+Games/Frontend/MAPPING/
+Games/Frontend/UTILS/
+Games/Frontend/README.TXT
+
+# Disc Images & Large Files
+*.cdi
+*.gdi
+*.iso
+*.raw
+*.bin.bak
+
+# VMU Root Test Dumps (keep DPWWW/VMU saves versioned)
+/*.VMS
+/*.vms
+/*.VMI
+/*.vmi
+/*.dci
+/*_vmu_save*.bin
+
+# Temporary & Build Files
+ADX_canciones
+*.tmp
+*.bak
+*.log
+.DS_Store
+__pycache__/
+*.pyc
+node_modules/
+.next/
+
+# Native Compiled Binaries
+Tools/linux/cdi4dc
+Tools/linux/scramble
