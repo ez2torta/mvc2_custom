@@ -109,23 +109,24 @@ def setup_all_vmu_saves():
         create_generic_vms(cvs2_dst, "CAPVSSNK2 SAVE", "Capcom vs. SNK 2 - 100% Save", 6144)
     make_vmi_file(os.path.join(VMU_DIR, "CVS2SYST.VMI"), "CVS2SYST", "CVS.S2___SYS", os.path.getsize(cvs2_dst), "CvS2 100% Unlocked Save")
 
-    # 2. Capcom vs SNK 1 (CVS1J / CVSJP / 313) - Use authentic 4608B save from 313.VMS
-    root_313 = "/home/tortita/Coding/Github/Side/mvc2_custom/313.VMS"
+    # 2. Capcom vs SNK 1 (CVS1J / CVSJP / 313) - Use authentic 4608B save from INITIAL_CVS1_SAVE.VMS
+    cvs1_pure_src = "/home/tortita/Coding/Github/Side/mvc2_custom/INITIAL_CVS1_SAVE.VMS"
     cvs1_dst = os.path.join(VMU_DIR, "CVS1J.VMS")
     cvsjp_dst = os.path.join(VMU_DIR, "CVSJP.VMS")
-    if os.path.exists(root_313):
-        with open(root_313, 'rb') as f:
+    v313_dst = os.path.join(VMU_DIR, "313.VMS")
+    if os.path.exists(cvs1_pure_src):
+        with open(cvs1_pure_src, 'rb') as f:
             cvs1_data = f.read()
-        with open(cvs1_dst, 'wb') as f:
-            f.write(cvs1_data)
-        with open(cvsjp_dst, 'wb') as f:
-            f.write(cvs1_data)
+        for dst_path in [cvs1_dst, cvsjp_dst, v313_dst]:
+            with open(dst_path, 'wb') as f:
+                f.write(cvs1_data)
     else:
         create_generic_vms(cvs1_dst, "CVS.S_SYSTEM", "CAPCOM VS. SNK 100% UNLOCK", 4608)
         create_generic_vms(cvsjp_dst, "CVS.S_SYSTEM", "CAPCOM VS. SNK 100% UNLOCK", 4608)
-    make_vmi_file(os.path.join(VMU_DIR, "CVS1J.VMI"), "CVS1J", "CAPVSSNK_SYS", os.path.getsize(cvs1_dst), "CvS1 Millennium 100% Unlock")
-    make_vmi_file(os.path.join(VMU_DIR, "CVSJP.VMI"), "CVSJP", "CAPVSSNK_SYS", os.path.getsize(cvsjp_dst), "CvS1 Millennium 100% Unlock")
-    make_vmi_file(os.path.join(VMU_DIR, "313.VMI"), "CVSJP", "CAPVSSNK_SYS", os.path.getsize(cvsjp_dst), "CvS1 Millennium 100% Unlock")
+        create_generic_vms(v313_dst, "CVS.S_SYSTEM", "CAPCOM VS. SNK 100% UNLOCK", 4608)
+    make_vmi_file(os.path.join(VMU_DIR, "CVS1J.VMI"), "CVS1J", "CAPVSSNK_SYS", 4608, "CvS1 Millennium 100% Unlock")
+    make_vmi_file(os.path.join(VMU_DIR, "CVSJP.VMI"), "CVSJP", "CAPVSSNK_SYS", 4608, "CvS1 Millennium 100% Unlock")
+    make_vmi_file(os.path.join(VMU_DIR, "313.VMI"), "CVSJP", "CAPVSSNK_SYS", 4608, "CvS1 Millennium 100% Unlock")
 
     # 3. Marvel vs Capcom 2 USA (USAMVC2)
     usa_mvc2_dst = os.path.join(VMU_DIR, "USAMVC2.VMS")
