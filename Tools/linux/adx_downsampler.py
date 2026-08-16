@@ -236,17 +236,25 @@ def downsample_adx_file(
     loop_end_orig = None
     loop_enabled = False
     
-    if orig_info and orig_info["loop_flag"] == 1:
+    # Jingles y efectos no-loopeables canónicos
+    NO_LOOP_TRACKS = {"ADX_CAPL.BIN", "ADX_HERE.BIN", "ADX_OPEN.BIN", "ADX_OVER.BIN", "ADX_STAF.BIN"}
+    
+    if fname_upper in NO_LOOP_TRACKS:
+        loop_enabled = False
+    elif loop_start_override is not None and loop_end_override is not None:
+        if loop_start_override != loop_end_override and loop_end_override > loop_start_override:
+            loop_enabled = True
+            loop_start_orig = loop_start_override
+            loop_end_orig = loop_end_override
+        else:
+            loop_enabled = False
+    elif orig_info and orig_info["loop_flag"] == 1:
         loop_enabled = True
         loop_start_orig = orig_info["loop_start_sample"]
         loop_end_orig = orig_info["loop_end_sample"]
-    elif loop_start_override is not None and loop_end_override is not None:
-        loop_enabled = True
-        loop_start_orig = loop_start_override
-        loop_end_orig = loop_end_override
     elif fname_upper in FALLBACK_LOOP_DICTS:
         fb = FALLBACK_LOOP_DICTS[fname_upper]
-        if fb["loop_start"] is not None and fb["loop_end"] is not None:
+        if fb["loop_start"] is not None and fb["loop_end"] is not None and fb["loop_end"] > fb["loop_start"]:
             loop_enabled = True
             loop_start_orig = fb["loop_start"]
             loop_end_orig = fb["loop_end"]
