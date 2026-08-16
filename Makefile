@@ -162,6 +162,19 @@ multidisc:
 		--lba "$${LBA:-11702}" \
 		$(if $(TEMPLATE),--template "$(TEMPLATE)",)
 
+## build-pack / buildpack / build-json: Compila cualquier multijuego definido en un archivo JSON declarativo
+##                                      Uso: make build-pack CONFIG=configs/capcom_fight_pack_4in1.json [OUT=output.cdi]
+buildpack: build-json
+build-pack: build-json
+multidisc-json: build-json
+build-json:
+	@if [ -z "$(CONFIG)" ]; then \
+		echo "[*] No se especificó CONFIG. Usando por defecto: configs/capcom_fight_pack_4in1.json"; \
+		python3 $(TOOLS_LINUX)/multidisc_manager.py build-json --config "$(ROOT_DIR)/configs/capcom_fight_pack_4in1.json" $(if $(OUT),--output "$(OUT)",); \
+	else \
+		python3 $(TOOLS_LINUX)/multidisc_manager.py build-json --config "$(CONFIG)" $(if $(OUT),--output "$(OUT)",); \
+	fi
+
 ## convert-audio: Convierte audio individual a ADX
 convert-audio:
 	@if [ -z "$(INPUT)" ]; then \

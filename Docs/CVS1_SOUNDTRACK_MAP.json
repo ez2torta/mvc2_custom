@@ -1,0 +1,630 @@
+{
+  "title": "Mapeo de Bandas Sonoras de Capcom vs SNK 1 (Japan / Millennium 2000)",
+  "description": "Edita este archivo para configurar qué pista de audio de MvC2, CvS2, SSF2X, SF3 3rd Strike, Puzzle Fighter y FanDisk sonará para cada pista de CvS1.",
+  "tracks": {
+    "ADX_0000.BIN": {
+      "role": "Osaka Stage - Capcom Side (Día)",
+      "type": "stage",
+      "desc": "Tema de escenario de Osaka (Día)",
+      "targets": {
+        "CVS2": "ADX_ST00.BIN",
+        "MVC2": "ADX_S000.BIN",
+        "3S": "02_B_NYC.ADX",
+        "ST": "A_BAR_1A.ADX",
+        "PF": "Q01_SMOR.ADX",
+        "FANDISK": "ADX_TP00.BIN"
+      }
+    },
+    "ADX_0001.BIN": {
+      "role": "Osaka Stage - SNK Side (Día)",
+      "type": "stage",
+      "desc": "Tema de escenario de Osaka SNK (Día)",
+      "targets": {
+        "CVS2": "ADX_ST01.BIN",
+        "MVC2": "ADX_S010.BIN",
+        "3S": "05_B_ROS.ADX",
+        "ST": "A_BIS_19.ADX",
+        "PF": "Q02_SCHU.ADX",
+        "FANDISK": "ADX_TP01.BIN"
+      }
+    },
+    "ADX_0100.BIN": {
+      "role": "Aomori Bridge - Capcom Side (Noche)",
+      "type": "stage",
+      "desc": "Puente de Aomori Nocturno",
+      "targets": {
+        "CVS2": "ADX_ST02.BIN",
+        "MVC2": "ADX_S020.BIN",
+        "3S": "09_C_GEM.ADX",
+        "ST": "A_BLA_15.ADX",
+        "PF": "Q03_SRYU.ADX",
+        "FANDISK": "ADX_TP02.BIN"
+      }
+    },
+    "ADX_0101.BIN": {
+      "role": "Aomori Bridge - SNK Side (Noche)",
+      "type": "stage",
+      "desc": "Puente de Aomori SNK",
+      "targets": {
+        "CVS2": "ADX_ST03.BIN",
+        "MVC2": "ADX_S030.BIN",
+        "3S": "12_C_CHI.ADX",
+        "ST": "A_CAM_1E.ADX",
+        "PF": "Q04_SKEN.ADX",
+        "FANDISK": "ADX_TP03.BIN"
+      }
+    },
+    "ADX_0200.BIN": {
+      "role": "Rooftop Dojo - Capcom Side (Atardecer)",
+      "type": "stage",
+      "desc": "Azotea al atardecer",
+      "targets": {
+        "CVS2": "ADX_ST04.BIN",
+        "MVC2": "ADX_S040.BIN",
+        "3S": "14_B_SHI.ADX",
+        "ST": "A_CHU_14.ADX",
+        "PF": "Q05_SLEI.ADX",
+        "FANDISK": "ADX_TP04.BIN"
+      }
+    },
+    "ADX_0201.BIN": {
+      "role": "Rooftop Dojo - SNK Side (Atardecer)",
+      "type": "stage",
+      "desc": "Azotea SNK al atardecer",
+      "targets": {
+        "CVS2": "ADX_ST05.BIN",
+        "MVC2": "ADX_S050.BIN",
+        "3S": "18_C_KYO.ADX",
+        "ST": "A_DEE_20.ADX",
+        "PF": "Q06_SDON.ADX",
+        "FANDISK": "ADX_TP05.BIN"
+      }
+    },
+    "ADX_0300.BIN": {
+      "role": "Geese Howard Theme (Geese ni Shoyu)",
+      "type": "boss",
+      "desc": "Tema clásico de Geese Howard",
+      "targets": {
+        "CVS2": "ADX_ST06.BIN",
+        "MVC2": "ADX_S060.BIN",
+        "3S": "21_C_DOJ.ADX",
+        "ST": "A_DHA_18.ADX",
+        "PF": "Q07_SFEL.ADX",
+        "FANDISK": "ADX_TP06.BIN"
+      }
+    },
+    "ADX_0301.BIN": {
+      "role": "Geese Howard Intro",
+      "type": "intro",
+      "desc": "Entrada y presentación de Geese",
+      "targets": {
+        "CVS2": "ADX_ST06.BIN",
+        "MVC2": "ADX_S060.BIN",
+        "3S": "21_C_DOJ.ADX",
+        "ST": "A_DHA_18.ADX",
+        "PF": "Q07_SFEL.ADX",
+        "FANDISK": "ADX_TP06.BIN"
+      }
+    },
+    "ADX_0302.BIN": {
+      "role": "Geese Howard Jingle",
+      "type": "jingle",
+      "desc": "Jingle corto de Geese",
+      "targets": {
+        "CVS2": "ADX_ST00.BIN",
+        "MVC2": "ADX_S000.BIN",
+        "3S": "02_B_NYC.ADX",
+        "ST": "A_RYU_12.ADX",
+        "PF": "Q01_SMOR.ADX",
+        "FANDISK": "ADX_TP00.BIN"
+      }
+    },
+    "ADX_0400.BIN": {
+      "role": "Vega / M. Bison Theme",
+      "type": "boss",
+      "desc": "Tema de jefe de Vega / Dictator",
+      "targets": {
+        "CVS2": "ADX_ST07.BIN",
+        "MVC2": "ADX_S070.BIN",
+        "3S": "22_A_YAM.ADX",
+        "ST": "A_FEI_1D.ADX",
+        "PF": "Q08_SSAK.ADX",
+        "FANDISK": "ADX_TP07.BIN"
+      }
+    },
+    "ADX_0401.BIN": {
+      "role": "Vega / M. Bison Intro",
+      "type": "intro",
+      "desc": "Entrada y presentación de Vega / M. Bison",
+      "targets": {
+        "CVS2": "ADX_ST07.BIN",
+        "MVC2": "ADX_S070.BIN",
+        "3S": "22_A_YAM.ADX",
+        "ST": "A_FEI_1D.ADX",
+        "PF": "Q08_SSAK.ADX",
+        "FANDISK": "ADX_TP07.BIN"
+      }
+    },
+    "ADX_0500.BIN": {
+      "role": "Special Match: Ryu vs. Kyo",
+      "type": "stage",
+      "desc": "Tema de rivalidad Ryu vs Kyo",
+      "targets": {
+        "CVS2": "ADX_ST08.BIN",
+        "MVC2": "ADX_S080.BIN",
+        "3S": "25_A_AFR.ADX",
+        "ST": "A_GOU_D6.ADX",
+        "PF": "Q09_SDEV.ADX",
+        "FANDISK": "ADX_TP08.BIN"
+      }
+    },
+    "ADX_0501.BIN": {
+      "role": "Special Match: Ryu vs. Kyo Intro",
+      "type": "intro",
+      "desc": "Intro del duelo Ryu vs Kyo",
+      "targets": {
+        "CVS2": "ADX_ST08.BIN",
+        "MVC2": "ADX_S080.BIN",
+        "3S": "25_A_AFR.ADX",
+        "ST": "A_GOU_D6.ADX",
+        "PF": "Q09_SDEV.ADX",
+        "FANDISK": "ADX_TP08.BIN"
+      }
+    },
+    "ADX_0600.BIN": {
+      "role": "Special Match: Iori vs. Kyo",
+      "type": "stage",
+      "desc": "Tema de rivalidad Iori vs Kyo",
+      "targets": {
+        "CVS2": "ADX_ST09.BIN",
+        "MVC2": "ADX_S090.BIN",
+        "3S": "30_C_BRA.ADX",
+        "ST": "A_GUI_17.ADX",
+        "PF": "Q0A_SGOU.ADX",
+        "FANDISK": "ADX_TP09.BIN"
+      }
+    },
+    "ADX_0601.BIN": {
+      "role": "Special Match: Iori vs. Kyo Intro",
+      "type": "intro",
+      "desc": "Intro del duelo Iori vs Kyo",
+      "targets": {
+        "CVS2": "ADX_ST09.BIN",
+        "MVC2": "ADX_S090.BIN",
+        "3S": "30_C_BRA.ADX",
+        "ST": "A_GUI_17.ADX",
+        "PF": "Q0A_SGOU.ADX",
+        "FANDISK": "ADX_TP09.BIN"
+      }
+    },
+    "ADX_0700.BIN": {
+      "role": "Gouki / Akuma Theme",
+      "type": "boss",
+      "desc": "Tema de jefe de Gouki / Akuma",
+      "targets": {
+        "CVS2": "ADX_ST0A.BIN",
+        "MVC2": "ADX_S0A0.BIN",
+        "3S": "32_B_LON.ADX",
+        "ST": "A_HON_13.ADX",
+        "PF": "Q0B_DANT.ADX",
+        "FANDISK": "ADX_TP0A.BIN"
+      }
+    },
+    "ADX_0701.BIN": {
+      "role": "Gouki / Akuma Intro",
+      "type": "intro",
+      "desc": "Entrada de Gouki / Akuma",
+      "targets": {
+        "CVS2": "ADX_ST0A.BIN",
+        "MVC2": "ADX_S0A0.BIN",
+        "3S": "32_B_LON.ADX",
+        "ST": "A_HON_13.ADX",
+        "PF": "Q0B_DANT.ADX",
+        "FANDISK": "ADX_TP0A.BIN"
+      }
+    },
+    "ADX_0800.BIN": {
+      "role": "Rugal Bernstein Theme",
+      "type": "boss",
+      "desc": "Tema de jefe de Rugal Bernstein",
+      "targets": {
+        "CVS2": "ADX_ST0B.BIN",
+        "MVC2": "ADX_S0B0.BIN",
+        "3S": "35_B_HON.ADX",
+        "ST": "A_KEN_11.ADX",
+        "PF": "Q0D_PLAY.ADX",
+        "FANDISK": "ADX_TP0B.BIN"
+      }
+    },
+    "ADX_0801.BIN": {
+      "role": "Rugal Bernstein Intro",
+      "type": "intro",
+      "desc": "Entrada de Rugal Bernstein",
+      "targets": {
+        "CVS2": "ADX_ST0B.BIN",
+        "MVC2": "ADX_S0B0.BIN",
+        "3S": "35_B_HON.ADX",
+        "ST": "A_KEN_11.ADX",
+        "PF": "Q0D_PLAY.ADX",
+        "FANDISK": "ADX_TP0B.BIN"
+      }
+    },
+    "ADX_0900.BIN": {
+      "role": "Final Tournament Stage",
+      "type": "stage",
+      "desc": "Escenario de la final del torneo",
+      "targets": {
+        "CVS2": "ADX_ST00.BIN",
+        "MVC2": "ADX_S000.BIN",
+        "3S": "40_A_Q.ADX",
+        "ST": "A_VEG_1C.ADX",
+        "PF": "Q11_SDEM.ADX",
+        "FANDISK": "ADX_FD08.BIN"
+      }
+    },
+    "ADX_0901.BIN": {
+      "role": "Final Tournament Stage Intro",
+      "type": "intro",
+      "desc": "Intro del torneo final",
+      "targets": {
+        "CVS2": "ADX_ST00.BIN",
+        "MVC2": "ADX_S000.BIN",
+        "3S": "40_A_Q.ADX",
+        "ST": "A_VEG_1C.ADX",
+        "PF": "Q11_SDEM.ADX",
+        "FANDISK": "ADX_FD08.BIN"
+      }
+    },
+    "ADX_0A00.BIN": {
+      "role": "Training Stage",
+      "type": "stage",
+      "desc": "Modo entrenamiento",
+      "targets": {
+        "CVS2": "ADX_ST05.BIN",
+        "MVC2": "ADX_S050.BIN",
+        "3S": "61_BO1.ADX",
+        "ST": "BONUS_3B.ADX",
+        "PF": "Q07_SFEL.ADX",
+        "FANDISK": "ADX_FD0D.BIN"
+      }
+    },
+    "ADX_0B00.BIN": {
+      "role": "Extra Stage: Pao Pao Cafe",
+      "type": "stage",
+      "desc": "Escenario extra Pao Pao Cafe",
+      "targets": {
+        "CVS2": "ADX_ST01.BIN",
+        "MVC2": "ADX_S010.BIN",
+        "3S": "37_A_FRA.ADX",
+        "ST": "A_RYU_12.ADX",
+        "PF": "Q03_SRYU.ADX",
+        "FANDISK": "ADX_TP0C.BIN"
+      }
+    },
+    "ADX_0B01.BIN": {
+      "role": "Extra Stage: Pao Pao Cafe Intro",
+      "type": "intro",
+      "desc": "Intro Pao Pao Cafe",
+      "targets": {
+        "CVS2": "ADX_ST01.BIN",
+        "MVC2": "ADX_S010.BIN",
+        "3S": "37_A_FRA.ADX",
+        "ST": "A_RYU_12.ADX",
+        "PF": "Q03_SRYU.ADX",
+        "FANDISK": "ADX_TP0C.BIN"
+      }
+    },
+    "ADX_0C00.BIN": {
+      "role": "Extra Stage: Metro City",
+      "type": "stage",
+      "desc": "Escenario extra Metro City (Final Fight)",
+      "targets": {
+        "CVS2": "ADX_ST02.BIN",
+        "MVC2": "ADX_S020.BIN",
+        "3S": "44_B_MEX.ADX",
+        "ST": "A_THA_1F.ADX",
+        "PF": "Q04_SKEN.ADX",
+        "FANDISK": "ADX_FD0A.BIN"
+      }
+    },
+    "ADX_0C01.BIN": {
+      "role": "Extra Stage: Metro City Intro",
+      "type": "intro",
+      "desc": "Intro Metro City",
+      "targets": {
+        "CVS2": "ADX_ST02.BIN",
+        "MVC2": "ADX_S020.BIN",
+        "3S": "44_B_MEX.ADX",
+        "ST": "A_THA_1F.ADX",
+        "PF": "Q04_SKEN.ADX",
+        "FANDISK": "ADX_FD0A.BIN"
+      }
+    },
+    "ADX_0D00.BIN": {
+      "role": "Extra Stage: Dojo",
+      "type": "stage",
+      "desc": "Escenario extra Dojo",
+      "targets": {
+        "CVS2": "ADX_ST03.BIN",
+        "MVC2": "ADX_S030.BIN",
+        "3S": "46_A_GRE.ADX",
+        "ST": "A_ZAN_16.ADX",
+        "PF": "Q06_SDON.ADX",
+        "FANDISK": "ADX_FD0C.BIN"
+      }
+    },
+    "ADX_0D01.BIN": {
+      "role": "Extra Stage: Dojo Intro",
+      "type": "intro",
+      "desc": "Intro Dojo",
+      "targets": {
+        "CVS2": "ADX_ST03.BIN",
+        "MVC2": "ADX_S030.BIN",
+        "3S": "46_A_GRE.ADX",
+        "ST": "A_ZAN_16.ADX",
+        "PF": "Q06_SDON.ADX",
+        "FANDISK": "ADX_FD0C.BIN"
+      }
+    },
+    "ADX_0E00.BIN": {
+      "role": "Extra Stage: Bonus Game",
+      "type": "stage",
+      "desc": "Minijuego / Bonus",
+      "targets": {
+        "CVS2": "ADX_ST07.BIN",
+        "MVC2": "ADX_S070.BIN",
+        "3S": "62_BO2.ADX",
+        "ST": "A_SAG_1B.ADX",
+        "PF": "Q08_SSAK.ADX",
+        "FANDISK": "ADX_FD0B.BIN"
+      }
+    },
+    "ADX_0F00.BIN": {
+      "role": "Continue Screen",
+      "type": "menu",
+      "desc": "Pantalla de cuenta regresiva / Continue",
+      "targets": {
+        "CVS2": "ADX_CONT.BIN",
+        "MVC2": "ADX_CONT.BIN",
+        "3S": "58_CONTI.ADX",
+        "ST": "CONTI_37.ADX",
+        "PF": "Q12_CONT.ADX",
+        "FANDISK": "ADX_FD01.BIN"
+      }
+    },
+    "ADX_1000.BIN": {
+      "role": "Game Over Screen",
+      "type": "menu",
+      "desc": "Pantalla de Game Over",
+      "targets": {
+        "CVS2": "ADX_OVER.BIN",
+        "MVC2": "ADX_OVER.BIN",
+        "3S": "59_OVER.ADX",
+        "ST": "GAME_39.ADX",
+        "PF": "Q14_OVER.ADX",
+        "FANDISK": "ADX_FD02.BIN"
+      }
+    },
+    "ADX_1100.BIN": {
+      "role": "Character Select",
+      "type": "menu",
+      "desc": "Selector de Personajes",
+      "targets": {
+        "CVS2": "ADX_SEL1.BIN",
+        "MVC2": "ADX_SELC.BIN",
+        "3S": "53_P_SEL.ADX",
+        "ST": "P_SEL_34.ADX",
+        "PF": "Q0E_SELE.ADX",
+        "FANDISK": "ADX_MENU.BIN"
+      }
+    },
+    "ADX_1200.BIN": {
+      "role": "Ratio / Order Select",
+      "type": "menu",
+      "desc": "Selección de Ratio y Orden de combate",
+      "targets": {
+        "CVS2": "ADX_RATO.BIN",
+        "MVC2": "ADX_MENU.BIN",
+        "3S": "57_S_SEL.ADX",
+        "ST": "VS_35.ADX",
+        "PF": "Q0E_SELE.ADX",
+        "FANDISK": "ADX_MENU.BIN"
+      }
+    },
+    "ADX_1300.BIN": {
+      "role": "Victory / Win Screen",
+      "type": "menu",
+      "desc": "Pantalla de victoria tras la ronda",
+      "targets": {
+        "CVS2": "ADX_WIN5.BIN",
+        "MVC2": "ADX_WINS.BIN",
+        "3S": "55_WIN.ADX",
+        "ST": "CONG2_D2.ADX",
+        "PF": "Q10_WINN.ADX",
+        "FANDISK": "ADX_FD00.BIN"
+      }
+    },
+    "ADX_1400.BIN": {
+      "role": "Ranking / Score Screen",
+      "type": "menu",
+      "desc": "Pantalla de mejores puntuaciones",
+      "targets": {
+        "CVS2": "ADX_ST00.BIN",
+        "MVC2": "ADX_S000.BIN",
+        "3S": "02_B_NYC.ADX",
+        "ST": "A_RYU_12.ADX",
+        "PF": "Q01_SMOR.ADX",
+        "FANDISK": "ADX_TP00.BIN"
+      }
+    },
+    "ADX_1500.BIN": {
+      "role": "Intermission / Next Match",
+      "type": "menu",
+      "desc": "Presentación del siguiente combate",
+      "targets": {
+        "CVS2": "ADX_ST00.BIN",
+        "MVC2": "ADX_S000.BIN",
+        "3S": "02_B_NYC.ADX",
+        "ST": "A_RYU_12.ADX",
+        "PF": "Q01_SMOR.ADX",
+        "FANDISK": "ADX_TP00.BIN"
+      }
+    },
+    "ADX_1700.BIN": {
+      "role": "Opening Demo & Title",
+      "type": "intro",
+      "desc": "Intro del juego y pantalla de inicio (Press Start)",
+      "targets": {
+        "CVS2": "ADX_OPEN.BIN",
+        "MVC2": "ADX_OPEN.BIN",
+        "3S": "52_OPEN.ADX",
+        "ST": "DEMO_33.ADX",
+        "PF": "Q0C_OPEN.ADX",
+        "FANDISK": "ADX_OPEN.BIN"
+      }
+    },
+    "ADX_1800.BIN": {
+      "role": "Capcom Ending 1",
+      "type": "ending",
+      "desc": "Final lado Capcom",
+      "targets": {
+        "CVS2": "ADX_ST00.BIN",
+        "MVC2": "ADX_S000.BIN",
+        "3S": "02_B_NYC.ADX",
+        "ST": "A_RYU_12.ADX",
+        "PF": "Q01_SMOR.ADX",
+        "FANDISK": "ADX_TP00.BIN"
+      }
+    },
+    "ADX_1900.BIN": {
+      "role": "SNK Ending 1",
+      "type": "ending",
+      "desc": "Final lado SNK",
+      "targets": {
+        "CVS2": "ADX_ST00.BIN",
+        "MVC2": "ADX_S000.BIN",
+        "3S": "02_B_NYC.ADX",
+        "ST": "A_RYU_12.ADX",
+        "PF": "Q01_SMOR.ADX",
+        "FANDISK": "ADX_TP00.BIN"
+      }
+    },
+    "ADX_1A00.BIN": {
+      "role": "Ending Jingle 1",
+      "type": "jingle",
+      "desc": "Jingle de final 1",
+      "targets": {
+        "CVS2": "ADX_ST00.BIN",
+        "MVC2": "ADX_S000.BIN",
+        "3S": "02_B_NYC.ADX",
+        "ST": "A_RYU_12.ADX",
+        "PF": "Q01_SMOR.ADX",
+        "FANDISK": "ADX_TP00.BIN"
+      }
+    },
+    "ADX_1B00.BIN": {
+      "role": "Capcom Logo Jingle",
+      "type": "jingle",
+      "desc": "Logo de Capcom al encender",
+      "targets": {
+        "CVS2": "ADX_ST00.BIN",
+        "MVC2": "ADX_S000.BIN",
+        "3S": "02_B_NYC.ADX",
+        "ST": "A_RYU_12.ADX",
+        "PF": "Q01_SMOR.ADX",
+        "FANDISK": "ADX_TP00.BIN"
+      }
+    },
+    "ADX_1C00.BIN": {
+      "role": "Ending Jingle 3",
+      "type": "jingle",
+      "desc": "Jingle de final 3",
+      "targets": {
+        "CVS2": "ADX_ST00.BIN",
+        "MVC2": "ADX_S000.BIN",
+        "3S": "02_B_NYC.ADX",
+        "ST": "A_RYU_12.ADX",
+        "PF": "Q01_SMOR.ADX",
+        "FANDISK": "ADX_TP00.BIN"
+      }
+    },
+    "ADX_1D00.BIN": {
+      "role": "Ending Jingle 4",
+      "type": "jingle",
+      "desc": "Jingle de final 4",
+      "targets": {
+        "CVS2": "ADX_ST00.BIN",
+        "MVC2": "ADX_S000.BIN",
+        "3S": "02_B_NYC.ADX",
+        "ST": "A_RYU_12.ADX",
+        "PF": "Q01_SMOR.ADX",
+        "FANDISK": "ADX_TP00.BIN"
+      }
+    },
+    "ADX_1E00.BIN": {
+      "role": "Staff Roll / Credits (Capcom Side)",
+      "type": "ending",
+      "desc": "Créditos del equipo Capcom",
+      "targets": {
+        "CVS2": "ADX_END1.BIN",
+        "MVC2": "ADX_STAF.BIN",
+        "3S": "49_END.ADX",
+        "ST": "E_RYU_23.ADX",
+        "PF": "Q17_ENDN.ADX",
+        "FANDISK": "ADX_TP00.BIN"
+      }
+    },
+    "ADX_1F00.BIN": {
+      "role": "Staff Roll / Credits (SNK Side)",
+      "type": "ending",
+      "desc": "Créditos del equipo SNK",
+      "targets": {
+        "CVS2": "ADX_END2.BIN",
+        "MVC2": "ADX_STAF.BIN",
+        "3S": "50_END.ADX",
+        "ST": "E_KEN_21.ADX",
+        "PF": "Q17_ENDN.ADX",
+        "FANDISK": "ADX_TP01.BIN"
+      }
+    },
+    "ADX_2000.BIN": {
+      "role": "Secret Unlock Jingle 1",
+      "type": "jingle",
+      "desc": "Jingle de personaje secreto",
+      "targets": {
+        "CVS2": "ADX_ST00.BIN",
+        "MVC2": "ADX_S000.BIN",
+        "3S": "02_B_NYC.ADX",
+        "ST": "A_RYU_12.ADX",
+        "PF": "Q01_SMOR.ADX",
+        "FANDISK": "ADX_TP00.BIN"
+      }
+    },
+    "ADX_2100.BIN": {
+      "role": "Secret Unlock Jingle 2",
+      "type": "jingle",
+      "desc": "Jingle de modo secreto",
+      "targets": {
+        "CVS2": "ADX_ST00.BIN",
+        "MVC2": "ADX_S000.BIN",
+        "3S": "02_B_NYC.ADX",
+        "ST": "A_RYU_12.ADX",
+        "PF": "Q01_SMOR.ADX",
+        "FANDISK": "ADX_TP00.BIN"
+      }
+    },
+    "ADX_2200.BIN": {
+      "role": "Secret Unlock Jingle 3",
+      "type": "jingle",
+      "desc": "Jingle especial",
+      "targets": {
+        "CVS2": "ADX_ST00.BIN",
+        "MVC2": "ADX_S000.BIN",
+        "3S": "02_B_NYC.ADX",
+        "ST": "A_RYU_12.ADX",
+        "PF": "Q01_SMOR.ADX",
+        "FANDISK": "ADX_TP00.BIN"
+      }
+    }
+  }
+}

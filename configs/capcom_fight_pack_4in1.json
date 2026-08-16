@@ -1,0 +1,46 @@
+{
+  "volume_name": "CAPCOM_FIGHT_PACK",
+  "base_lba": 11702,
+  "output_cdi": "output_cdi/capcom_fight_pack.cdi",
+  "menu_template": "Games/Frontend/DPWWW/templates/fightpack_4in1.html",
+  "description": "Capcom Fighting Collection 4-en-1 para Sega Dreamcast (CD-R 700MB / MIL-CD)",
+  "games": [
+    {
+      "id": "GAME20",
+      "name": "Marvel vs. Capcom 2 (Nene Edition)",
+      "source_dir": "MVC2",
+      "audio_pool": "Games/Frontend/ADXFILES/MVC_CUSTOM",
+      "soundtrack_target_key": "MVC2",
+      "generate_soundtracks": ["ALL", "SILENT"]
+    },
+    {
+      "id": "USAMVC",
+      "name": "Marvel vs. Capcom 2 (Vanilla Jazz Edition)",
+      "source_dir": "MVC2",
+      "soundtrack_target_key": "MVC2"
+    },
+    {
+      "id": "JAPCVS",
+      "name": "Capcom vs. SNK 2 (English Translation v1.2)",
+      "source_dir": "Games/CVS2",
+      "audio_pool": "Games/Frontend/ADXFILES/CVS",
+      "soundtrack_target_key": "CVS2",
+      "generate_soundtracks": ["ALL", "SILENT"]
+    },
+    {
+      "id": "CVS1J",
+      "name": "Capcom vs. SNK (Millennium Fight 2000 Pro / J)",
+      "source_dir": "Games/CVS1J",
+      "audio_pool": "Games/Frontend/ADXFILES/CVS1",
+      "soundtrack_target_key": "CVS1",
+      "generate_soundtracks": ["ALL", "SILENT"]
+    },
+    {
+      "id": "ST",
+      "name": "Super Street Fighter II X: Grand Master Challenge",
+      "source_dir": "Games/SSF2X",
+      "soundtrack_target_key": "ST",
+      "generate_soundtracks": ["ALL", "SILENT"]
+    }
+  ]
+}

@@ -43,6 +43,12 @@ def main():
         p_mod.add_argument('--volume', '-v', default='CAPCOM_FIGHT_PACK', help='Nombre de volumen ISO')
         p_mod.add_argument('--lba', type=int, default=11702, help='Base LBA para la pista de datos (default: 11702)')
 
+    # 3.1 build-json / build-pack (Declarativo desde archivo JSON)
+    for cmd_json in ['build-json', 'build-pack', 'build-config']:
+        p_json = subparsers.add_parser(cmd_json, help='Compila un multijuego definido declarativamente en un archivo JSON')
+        p_json.add_argument('--config', '-c', required=True, help='Ruta al archivo JSON de configuración (ej: configs/capcom_fight_pack_4in1.json)')
+        p_json.add_argument('--output', '-o', default=None, help='Ruta de salida del archivo .cdi (opcional, sobreescribe el JSON)')
+
     # 4. build-mini
     p_mini = subparsers.add_parser('build-mini', help='Mini-experimento: Menú + Super Puzzle Fighter II X (CDI)')
     p_mini.add_argument('--output', '-o', default=None, help='Ruta del archivo .cdi de salida')
@@ -115,6 +121,9 @@ def main():
     elif args.command in ('build-modular', 'build-fightpack', 'build-4pack'):
         out_cdi = args.output if args.output else os.path.join(REPO_ROOT, 'output_cdi', 'capcom_fight_pack.cdi')
         build_capcom_fight_pack_cdi(out_cdi, volume_name=args.volume, custom_template_html=args.template, base_lba=args.lba)
+    elif args.command in ('build-json', 'build-pack', 'build-config'):
+        from .packs.json_pack import build_multidisc_from_json
+        build_multidisc_from_json(args.config, output_override=args.output)
     elif args.command == 'build-mini':
         out_cdi = args.output if args.output else os.path.join(REPO_ROOT, 'output_cdi', 'mini_puzzle_multidisc.cdi')
         build_mini_puzzle_cdi(out_cdi, volume_name=args.volume)

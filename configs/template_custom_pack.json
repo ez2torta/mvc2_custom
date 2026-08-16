@@ -1,0 +1,23 @@
+{
+  "volume_name": "MI_MULTIJUEGO_CUSTOM",
+  "base_lba": 11702,
+  "output_cdi": "output_cdi/mi_multijuego.cdi",
+  "menu_template": "Games/Frontend/DPWWW/INDEX.HTML",
+  "description": "Plantilla para compilar cualquier multijuego de Dreamcast a partir de una lista JSON",
+  "games": [
+    {
+      "id": "GAME20",
+      "name": "Marvel vs. Capcom 2",
+      "source_dir": "MVC2",
+      "soundtrack_target_key": "MVC2",
+      "generate_soundtracks": ["CVS2", "3S", "ST", "SILENT"]
+    },
+    {
+      "id": "JAPCVS",
+      "name": "Capcom vs. SNK 2",
+      "source_dir": "Games/CVS2",
+      "soundtrack_target_key": "CVS2",
+      "generate_soundtracks": ["MVC2", "ST", "SILENT"]
+    }
+  ]
+}
