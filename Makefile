@@ -199,6 +199,27 @@ unscramble:
 	fi
 	$(TOOLS_LINUX)/scramble "$(INPUT)" "$(OUTPUT)"
 
+## mr-info: Muestra información de los logos y metadatos de IP.BIN
+mr-info:
+	@echo "[*] Leyendo metadatos y MR Logo de MVC2/IP.BIN..."
+	@python3 $(TOOLS_LINUX)/mr_logo_manager.py info "$(MVC2_DATA)/IP.BIN"
+	@echo ""
+	@echo "[*] Leyendo metadatos y MR Logo de Games/Frontend/IP.BIN..."
+	@python3 $(TOOLS_LINUX)/mr_logo_manager.py info "$(ROOT_DIR)/Games/Frontend/IP.BIN"
+
+## mr-extract: Extrae el MR Logo actual a PNG (Extracted_Textures/current_boot_logo.png)
+mr-extract:
+	@mkdir -p "$(TEXTURES_DIR)"
+	@python3 $(TOOLS_LINUX)/mr_logo_manager.py extract "$(ROOT_DIR)/Games/Frontend/IP.BIN" "$(TEXTURES_DIR)/current_boot_logo.png"
+
+## mr-inject: Inyecta una imagen PNG como MR Logo en MVC2 y Multijuegos (Uso: make mr-inject IMAGE=mi_logo.png)
+mr-inject:
+	@if [ -z "$(IMAGE)" ]; then \
+		echo "[!] Error: Especifica IMAGE=<ruta_a_la_imagen.png> [X=12] [Y=16] [COLORS=16]"; \
+		exit 1; \
+	fi
+	python3 $(TOOLS_LINUX)/mr_logo_manager.py inject "$(IMAGE)" --all $(if $(X),--pos-x $(X),) $(if $(Y),--pos-y $(Y),) $(if $(COLORS),--colors $(COLORS),)
+
 ## clean: Limpia directorios de salida
 clean:
 	@echo "[*] Limpiando directorios de compilación..."
