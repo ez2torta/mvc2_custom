@@ -128,6 +128,19 @@ def retarget_staged_binaries_for_lba(staging_dir: str, target_lba: int = 11702, 
                     data = bytearray(fp.read())
                 
                 modified = False
+                
+                # Caso especial quirúrgico: Marvel vs. Capcom 2 (1ST_READ.BIN de 1,811,728 bytes)
+                if len(data) == 1811728:
+                    if data[0x1660b0:0x1660b4] != target_trk_bytes:
+                        data[0x1660b0:0x1660b4] = target_trk_bytes
+                        modified = True
+                    if data[0x16647c:0x166480] != target_trk_bytes:
+                        data[0x16647c:0x166480] = target_trk_bytes
+                        modified = True
+                    if data[0x1b4310:0x1b4314] != target_pvd_bytes:
+                        data[0x1b4310:0x1b4314] = target_pvd_bytes
+                        modified = True
+
                 for old_pvd in known_fads_pvd:
                     if old_pvd != target_pvd_bytes:
                         idx = 0
@@ -161,12 +174,24 @@ def retarget_staged_binaries_for_lba(staging_dir: str, target_lba: int = 11702, 
                         rel = os.path.relpath(fpath, staging_dir)
                         print(f"  [✓] Binario calibrado a LBA {target_lba} (PVD FAD {target_fad_pvd}): {rel}")
 
-    # Calibrar TOC de IP.BIN
+    # Calibrar TOC y cabecera de IP.BIN para MIL-CD
     ip_bin_path = os.path.join(staging_dir, 'IP.BIN')
     if os.path.isfile(ip_bin_path):
         with open(ip_bin_path, 'rb') as fp:
             ip_data = bytearray(fp.read())
+            
+        # 1. Configurar tipo de medio a CD-ROM1/1
+        if target_lba == 11702:
+            ip_data[0x20:0x30] = b'    CD-ROM1/1   '
+        else:
+            ip_data[0x20:0x30] = b'    GD-ROM1/1   '
+            
+        # 2. Calibrar TOC1 (Slot 1 a Track FAD con flag 0x41 y limpiar tracks fantasma a 0xFF)
+        ip_data[0x100:0x104] = b'TOC1'
         ip_data[0x104:0x107] = struct.pack('<I', target_fad_trk)[:3]
+        ip_data[0x107] = 0x41
+        ip_data[0x108:0x160] = b'\xff' * (0x160 - 0x108)
+        
         try:
             os.remove(ip_bin_path)
         except OSError:
@@ -174,7 +199,7 @@ def retarget_staged_binaries_for_lba(staging_dir: str, target_lba: int = 11702, 
         with open(ip_bin_path, 'wb') as fp:
             fp.write(ip_data)
         if verbose:
-            print(f"  [✓] IP.BIN TOC calibrado a LBA {target_lba} (Track FAD {target_fad_trk})")
+            print(f"  [✓] IP.BIN TOC calibrado a LBA {target_lba} (Track FAD {target_fad_trk}, CD-ROM Mode)")
 
     return total_patched
 

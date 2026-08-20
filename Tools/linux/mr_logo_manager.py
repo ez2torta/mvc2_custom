@@ -2,9 +2,8 @@
 """
 mr_logo_manager.py - Gestor de MR Logos y Metadatos de IP.BIN para Sega Dreamcast
 ================================================================================
-Permite extraer, crear e inyectar el logotipo MR ("Media Research Logo") que se muestra
-en la pantalla de licencia de SEGA durante el arranque de la Dreamcast, tanto para
-Marvel vs Capcom 2 Standalone como para el disco Multijuegos (Frontend).
+Implementa el codificador y decodificador canónico Katana MR RLE (0x226C - 0x23CA)
+garantizando 100% de compatibilidad y seguridad en el arranque de la Dreamcast.
 """
 
 import sys
@@ -14,7 +13,8 @@ import struct
 from PIL import Image
 
 MR_OFFSET = 0x226C
-MAX_MR_SIZE = 32768 - MR_OFFSET  # 23,956 bytes max
+KATANA_CODE_OFFSET = 0x23CA
+MAX_MR_SAFE_SIZE = KATANA_CODE_OFFSET - MR_OFFSET  # 350 bytes seguros
 
 def pad(text, length):
     return text.encode('ascii', errors='ignore')[:length].ljust(length, b' ')
@@ -66,7 +66,7 @@ def encode_image_to_mr(image_path, pos_x=12, pos_y=16, max_colors=16):
         
     w, h = img.size
     palette_raw = img.getpalette()
-    num_colors = min(len(palette_raw) // 3 if palette_raw else 0, 256)
+    num_colors = min(len(palette_raw) // 3 if palette_raw else 0, max_colors)
     if num_colors == 0:
         num_colors = 1
         palette_raw = [0, 0, 0]
@@ -83,26 +83,22 @@ def encode_image_to_mr(image_path, pos_x=12, pos_y=16, max_colors=16):
     except AttributeError:
         pixels = list(img.getdata())
         
+    # Algoritmo RLE Canónico Katana Dreamcast
     mr_data = bytearray()
     i = 0
     total = len(pixels)
     while i < total:
         color = pixels[i]
         run_len = 1
-        while i + run_len < total and pixels[i + run_len] == color and run_len < 255:
+        while i + run_len < total and pixels[i + run_len] == color and run_len < 127:
             run_len += 1
             
-        if run_len > 1:
-            if run_len <= 127:
-                mr_data.extend([0x80 | run_len, color])
-            else:
-                mr_data.extend([0x82, run_len, color])
+        if run_len >= 2:
+            mr_data.append(0x80 | run_len)
+            mr_data.append(color)
             i += run_len
         else:
-            if color < 0x80:
-                mr_data.append(color)
-            else:
-                mr_data.extend([0x81, color])
+            mr_data.append(color)
             i += 1
             
     header_size = 30 + len(mr_palette)
@@ -118,8 +114,8 @@ def encode_image_to_mr(image_path, pos_x=12, pos_y=16, max_colors=16):
     header[26:28] = struct.pack('<H', num_colors)
     
     full_mr = bytes(header + mr_palette + mr_data)
-    if len(full_mr) > MAX_MR_SIZE:
-        raise ValueError(f"El tamaño del MR generado ({len(full_mr)} bytes) excede el máximo permitido ({MAX_MR_SIZE} bytes).")
+    if len(full_mr) > MAX_MR_SAFE_SIZE:
+        raise ValueError(f"Error: El logo MR generado ({len(full_mr)} bytes) excede el límite seguro de Katana OS ({MAX_MR_SAFE_SIZE} bytes).")
     return full_mr
 
 def decode_mr_to_png(mr_bytes, output_png_path):
@@ -144,14 +140,8 @@ def decode_mr_to_png(mr_bytes, output_png_path):
     while i < len(img_data) and len(pixels) < total_pixels:
         b = img_data[i]
         i += 1
-        if b == 0x82:
-            count = img_data[i]
-            i += 1
-            color = img_data[i]
-            i += 1
-            pixels.extend([color] * count)
-        elif b > 0x80:
-            count = b - 0x80
+        if b >= 0x80:
+            count = b & 0x7F
             color = img_data[i]
             i += 1
             pixels.extend([color] * count)
@@ -171,16 +161,18 @@ def inject_mr_into_ipbin(ip_path, mr_data):
     if len(data) < 32768:
         raise ValueError(f"{ip_path} debe tener 32768 bytes (32 KB).")
         
-    # Limpiar sector MR anterior
-    data[MR_OFFSET:32768] = b'\x00' * (32768 - MR_OFFSET)
-    # Escribir nuevo MR
+    if len(mr_data) > MAX_MR_SAFE_SIZE:
+        raise ValueError(f"Error: El logo MR ({len(mr_data)} bytes) excede el límite seguro de Katana OS ({MAX_MR_SAFE_SIZE} bytes).")
+        
+    # Limpiar únicamente la sección del MR logo sin tocar el código Katana de 0x23CA en adelante
+    data[MR_OFFSET:KATANA_CODE_OFFSET] = b'\x00' * MAX_MR_SAFE_SIZE
     data[MR_OFFSET:MR_OFFSET+len(mr_data)] = mr_data
     
     with open(ip_path, 'wb') as f:
         f.write(data)
 
 def main():
-    parser = argparse.ArgumentParser(description="Gestor de MR Logo y Metadatos de IP.BIN para Sega Dreamcast")
+    parser = argparse.ArgumentParser(description="Gestor Canónico de MR Logo y Metadatos de IP.BIN para Sega Dreamcast")
     subparsers = parser.add_subparsers(dest="command", required=True)
     
     # info
@@ -198,7 +190,7 @@ def main():
     p_enc.add_argument("output_mr", help="Ruta al archivo .mr de salida")
     p_enc.add_argument("--pos-x", type=int, default=12, help="Posición horizontal en pantalla (def: 12)")
     p_enc.add_argument("--pos-y", type=int, default=16, help="Posición vertical en pantalla (def: 16)")
-    p_enc.add_argument("--colors", type=int, default=16, help="Número de colores (def: 16, max: 256)")
+    p_enc.add_argument("--colors", type=int, default=16, help="Número de colores (def: 16, max: 16)")
     
     # inject
     p_inj = subparsers.add_parser("inject", help="Inyecta un logo (.png o .mr) en uno o más archivos IP.BIN")
@@ -242,7 +234,7 @@ def main():
             print(f"   Dimensiones  : {mr['width']} x {mr['height']} píxeles")
             print(f"   Posición X,Y : ({mr['pos_x']}, {mr['pos_y']})")
             print(f"   Colores      : {mr['num_colors']} colores")
-            print(f"   Tamaño MR    : {mr['size']} bytes")
+            print(f"   Tamaño MR    : {mr['size']} bytes (Límite Seguro Katana: {MAX_MR_SAFE_SIZE} B)")
         else:
             print(f" MR Boot Logo   : No presente o sector vacío")
         print(f"============================================================")
@@ -273,8 +265,7 @@ def main():
             default_targets = [
                 'MVC2/IP.BIN',
                 'Games/Frontend/IP.BIN',
-                'output_gdi/IP.BIN',
-                'Games/MVC2_Vanilla/IP.BIN'
+                'output_gdi/IP.BIN'
             ]
             for t in default_targets:
                 if os.path.exists(t):
@@ -287,7 +278,7 @@ def main():
             
         for t in targets:
             inject_mr_into_ipbin(t, mr_bytes)
-            print(f"[✓] MR Logo inyectado exitosamente en: {t}")
+            print(f"[✓] MR Logo inyectado exitosamente en: {t} ({len(mr_bytes)} bytes)")
             
     elif args.command == "set-meta":
         data = bytearray(open(args.ip_file, 'rb').read())
